@@ -1,0 +1,33 @@
+package com.old.silence.job.server.api.assembler;
+
+import cn.hutool.core.util.StrUtil;
+
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.springframework.core.convert.converter.Converter;
+import com.alibaba.fastjson2.JSON;
+import com.old.silence.core.mapstruct.MapStructSpringConfig;
+import com.old.silence.job.server.domain.model.RetrySceneConfig;
+import com.old.silence.job.server.vo.SceneConfigResponseVO;
+
+import java.math.BigInteger;
+import java.util.HashSet;
+import java.util.Set;
+
+
+@Mapper(uses = MapStructSpringConfig.class)
+public interface SceneConfigResponseVOMapper extends Converter<RetrySceneConfig, SceneConfigResponseVO> {
+
+
+    @Override
+    @Mapping(target = "notifyIds", expression = "java(toNotifyIds(retrySceneConfig.getNotifyIds()))")
+    SceneConfigResponseVO convert(RetrySceneConfig retrySceneConfig);
+
+    default Set<BigInteger> toNotifyIds(String notifyIds) {
+        if (StrUtil.isBlank(notifyIds)) {
+            return new HashSet<>();
+        }
+
+        return new HashSet<>(JSON.parseArray(notifyIds, BigInteger.class));
+    }
+}

@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>com.old.silence</groupId>
+        <artifactId>silence-job-server</artifactId>
+        <version>1.8.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>silence-job-server-app</artifactId>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.old.silence</groupId>
+            <artifactId>platform-webmvc</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.old.silence</groupId>
+            <artifactId>platform-validation</artifactId>
+        </dependency>
+
+        <!-- Server Core Dependencies (Refactored) -->
+        <dependency>
+            <groupId>com.old.silence.job</groupId>
+            <artifactId>silence-job-server-core-model</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.old.silence.job</groupId>
+            <artifactId>silence-job-server-core-repository</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.old.silence.job</groupId>
+            <artifactId>silence-job-server-core-service</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.old.silence</groupId>
+            <artifactId>silence-job-common-server-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.old.silence</groupId>
+            <artifactId>silence-job-server-retry-task</artifactId>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.old.silence</groupId>
+            <artifactId>silence-job-server-job-task</artifactId>
+            <scope>compile</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-core</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-web</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-config</artifactId>
+        </dependency>
+
+        <!-- 认证中心客户端 - 多微服务共享的用户鉴权组件 -->
+        <dependency>
+            <groupId>com.old.silence</groupId>
+            <artifactId>silence-auth-center-client</artifactId>
+            <version>2.0.1-SNAPSHOT</version>
+            <scope>provided</scope><!-- 开发时如未安装可暂时跳过，运行时必需 -->
+        </dependency>
+
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-deploy-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>

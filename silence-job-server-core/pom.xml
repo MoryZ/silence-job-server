@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>com.old.silence</groupId>
+        <artifactId>silence-job-server</artifactId>
+        <version>1.8.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>silence-job-server-core</artifactId>
+
+    <properties>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+
+    <dependencies>
+        <!-- Core Module Dependencies -->
+        <dependency>
+            <groupId>com.old.silence.job</groupId>
+            <artifactId>silence-job-server-core-model</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.old.silence.job</groupId>
+            <artifactId>silence-job-server-core-repository</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.old.silence.job</groupId>
+            <artifactId>silence-job-server-core-service</artifactId>
+        </dependency>
+
+        <!-- External Dependencies -->
+        <dependency>
+            <groupId>com.old.silence</groupId>
+            <artifactId>platform-data-mybatis-plus</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.old.silence</groupId>
+            <artifactId>silence-job-common-server-api</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.mysql</groupId>
+            <artifactId>mysql-connector-j</artifactId>
+            <version>${mysql-connector-j.version}</version>
+        </dependency>
+
+    </dependencies>
+
+</project>

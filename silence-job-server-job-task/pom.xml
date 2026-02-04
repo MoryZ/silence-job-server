@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>com.old.silence</groupId>
+        <artifactId>silence-job-server</artifactId>
+        <version>1.8.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>silence-job-server-job-task</artifactId>
+
+    <properties>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+
+    <dependencies>
+
+        <!--    libs    -->
+        <dependency>
+            <groupId>com.github.rholder</groupId>
+            <artifactId>guava-retrying</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.googlecode.aviator</groupId>
+            <artifactId>aviator</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.alibaba</groupId>
+            <artifactId>QLExpress</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>commons-beanutils</groupId>
+                    <artifactId>commons-beanutils</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
+        <!--   SilenceJob     -->
+        <dependency>
+            <groupId>com.old.silence</groupId>
+            <artifactId>silence-job-server-task-common</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.old.silence</groupId>
+            <artifactId>silence-job-server-common</artifactId>
+            <version>1.8.0-SNAPSHOT</version>
+        </dependency>
+        <!-- 上报日志，采用logback打印，排除log4j2 -->
+        <dependency>
+            <groupId>com.old.silence</groupId>
+            <artifactId>silence-job-common-log</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>spring-boot-starter-log4j2</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>com.old.silence</groupId>
+            <artifactId>silence-job-common-server-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.old.silence</groupId>
+            <artifactId>silence-job-common-client-api</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.old.silence</groupId>
+            <artifactId>silence-job-server-retry-task</artifactId>
+            <version>1.8.0-SNAPSHOT</version>
+        </dependency>
+
+        <!-- Server Core Dependencies (Refactored) -->
+        <dependency>
+            <groupId>com.old.silence.job</groupId>
+            <artifactId>silence-job-server-core-model</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.old.silence.job</groupId>
+            <artifactId>silence-job-server-core-repository</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.old.silence.job</groupId>
+            <artifactId>silence-job-server-core-service</artifactId>
+        </dependency>
+
+    </dependencies>
+
+</project>

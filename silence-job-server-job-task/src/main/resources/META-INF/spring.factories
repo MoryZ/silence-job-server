@@ -1,0 +1,2 @@
+org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
+     com.old.silence.job.server.job.task.SilenceJobServerJobTaskStarter

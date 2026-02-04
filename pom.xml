@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    
+    <parent>
+        <groupId>com.old.silence</groupId>
+        <artifactId>platform-parent</artifactId>
+        <version>2.0.1-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>silence-job-server</artifactId>
+    <version>3.0.0-SNAPSHOT</version>
+    <packaging>pom</packaging>
+    <name>SilenceJob Server</name>
+    <description>Distributed task scheduling server with job management, scheduling, monitoring and retry services</description>
+
+    <properties>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <silence-job-common.version>1.0.0</silence-job-common.version>
+    </properties>
+
+    <modules>
+        <module>silence-job-server-starter</module>
+        <module>silence-job-server-app</module>
+        <module>silence-job-server-common</module>
+        <module>silence-job-server-core</module>
+        <module>silence-job-server-core-model</module>
+        <module>silence-job-server-core-repository</module>
+        <module>silence-job-server-core-service</module>
+        <module>silence-job-server-job-task</module>
+        <module>silence-job-server-retry-task</module>
+        <module>silence-job-server-rpc</module>
+        <module>silence-job-server-scheduler</module>
+        <module>silence-job-server-support</module>
+        <module>silence-job-server-task-common</module>
+    </modules>
+
+    <dependencyManagement>
+        <dependencies>
+            <!-- SilenceJob Common Dependencies -->
+            <dependency>
+                <groupId>com.old.silence</groupId>
+                <artifactId>silence-job-common-core</artifactId>
+                <version>${silence-job-common.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.old.silence</groupId>
+                <artifactId>silence-job-common-log</artifactId>
+                <version>${silence-job-common.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.old.silence</groupId>
+                <artifactId>silence-job-common-server-api</artifactId>
+                <version>${silence-job-common.version}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+</project>

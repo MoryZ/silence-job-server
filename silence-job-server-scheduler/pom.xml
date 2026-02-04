@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+         http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.old.silence</groupId>
+        <artifactId>silence-job-server</artifactId>
+        <version>1.8.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>silence-job-server-scheduler</artifactId>
+    <name>Silence Job Server Scheduler</name>
+    <description>Scheduling and execution layer (Node allocation, Pekko actors, Task scheduling)</description>
+
+    <dependencies>
+        <!-- Support Module -->
+        <dependency>
+            <groupId>com.old.silence</groupId>
+            <artifactId>silence-job-server-support</artifactId>
+        </dependency>
+
+        <!-- RPC Module -->
+        <dependency>
+            <groupId>com.old.silence</groupId>
+            <artifactId>silence-job-server-rpc</artifactId>
+        </dependency>
+
+        <!-- Pekko (Actor Framework) -->
+        <dependency>
+            <groupId>org.apache.pekko</groupId>
+            <artifactId>pekko-actor-typed_2.13</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.pekko</groupId>
+            <artifactId>pekko-actor-testkit-typed_2.13</artifactId>
+        </dependency>
+
+        <!-- Guava -->
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+        </dependency>
+
+        <!-- Spring -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter</artifactId>
+        </dependency>
+
+        <!-- Lombok -->
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <optional>true</optional>
+        </dependency>
+    </dependencies>
+
+</project>

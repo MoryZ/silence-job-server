@@ -1,0 +1,62 @@
+server:
+  port: 8098
+  servlet:
+    context-path:
+
+spring:
+  application:
+    name: job-service
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/silence-platform?allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false
+    username: root
+    password: 123456
+    type: com.zaxxer.hikari.HikariDataSource
+    hikari:
+      connection-timeout: 30000
+      minimum-idle: 5
+      maximum-pool-size: 100
+      auto-commit: true
+      idle-timeout: 30000
+      pool-name: silence_job
+      max-lifetime: 1800000
+  cloud:
+    nacos:
+      discovery:
+        server-addr: localhost:8848
+        username: nacos
+        password: nacos
+  mail:
+    host: smtp.163.com
+    port: 465
+    protocol: smtps
+    username: 13611988536@163.com
+    password: PTsXDSWS8PqZarUA
+    from: 13611988536@163.com
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+          socketFactory: javax.net.ssl.SSLSocketFactory
+
+silence-job:
+  retry-pull-page-size: 1000 # 拉取重试数据的每批次的大小
+  job-pull-page-size: 1000 # 拉取重试数据的每批次的大小
+  server-port: 17888  # 服务器端口
+  log-storage: 7 # 日志保存时间(单位: day)
+  rpc-type: grpc
+
+platform:
+  system:
+    identifier: JC
+
+
+silence:
+  auth:
+    center:
+      security:
+        api:
+          white-list:

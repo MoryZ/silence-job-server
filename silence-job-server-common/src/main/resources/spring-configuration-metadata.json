@@ -1,0 +1,18 @@
+{
+  "groups": [
+    {
+      "name": "silence-job",
+      "type": "com.old.silence.job.server.common.config.SystemProperties",
+      "sourceType": "com.old.silence.job.server.common.config.SystemProperties"
+    }
+  ],
+  "properties": [
+    {
+      "name": "silence-job.callback",
+      "type": "com.old.silence.job.server.common.config.SystemProperties$Callback",
+      "defaultValue": "30",
+      "description": "服务端的地址，若服务端集群部署则此处配置域名",
+      "sourceType": "com.old.silence.job.server.common.config.SystemProperties$Callback"
+    }
+  ]
+}
