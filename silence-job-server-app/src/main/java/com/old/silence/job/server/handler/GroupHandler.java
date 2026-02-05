@@ -12,7 +12,6 @@ import com.google.common.collect.Sets;
 import com.old.silence.core.util.CollectionUtils;
 import com.old.silence.job.common.util.StreamUtils;
 import com.old.silence.job.server.domain.model.GroupConfig;
-import com.old.silence.job.server.domain.service.AccessTemplate;
 import com.old.silence.job.server.exception.SilenceJobServerException;
 
 

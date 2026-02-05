@@ -25,10 +25,9 @@ import com.old.silence.job.server.domain.model.Retry;
 import com.old.silence.job.server.domain.model.RetryDeadLetter;
 import com.old.silence.job.server.domain.model.RetryTask;
 import com.old.silence.job.server.domain.model.RetryTaskLogMessage;
-import com.old.silence.job.server.domain.service.AccessTemplate;
-import com.old.silence.job.server.domain.service.task.TaskAccess;
 import com.old.silence.job.server.exception.SilenceJobServerException;
 import com.old.silence.job.server.infrastructure.persistence.dao.RetryDao;
+import com.old.silence.job.server.infrastructure.persistence.dao.RetryDeadLetterDao;
 import com.old.silence.job.server.infrastructure.persistence.dao.RetryTaskDao;
 import com.old.silence.job.server.infrastructure.persistence.dao.RetryTaskLogMessageDao;
 import com.old.silence.job.server.retry.task.dto.RetryPartitionTask;
@@ -57,20 +56,21 @@ import java.util.stream.Collectors;
 public class CleanerSchedule extends AbstractSchedule implements Lifecycle {
     private final RetryDao retryDao;
     private final RetryTaskDao retryTaskDao;
+    private final RetryDeadLetterDao retryDeadLetterDao;
     private final SystemProperties systemProperties;
     private final RetryTaskLogMessageDao retryTaskLogMessageDao;
     private final TransactionTemplate transactionTemplate;
-    private final AccessTemplate accessTemplate;
 
     public CleanerSchedule(RetryDao retryDao, RetryTaskDao retryTaskDao,
-                           SystemProperties systemProperties, RetryTaskLogMessageDao retryTaskLogMessageDao,
-                           TransactionTemplate transactionTemplate, AccessTemplate accessTemplate) {
+                           RetryDeadLetterDao retryDeadLetterDao, SystemProperties systemProperties, 
+                           RetryTaskLogMessageDao retryTaskLogMessageDao,
+                           TransactionTemplate transactionTemplate) {
         this.retryDao = retryDao;
         this.retryTaskDao = retryTaskDao;
+        this.retryDeadLetterDao = retryDeadLetterDao;
         this.systemProperties = systemProperties;
         this.retryTaskLogMessageDao = retryTaskLogMessageDao;
         this.transactionTemplate = transactionTemplate;
-        this.accessTemplate = accessTemplate;
     }
 
     @Override
@@ -216,12 +216,10 @@ public class CleanerSchedule extends AbstractSchedule implements Lifecycle {
             retryDeadLetter.setCreatedDate(now);
         }
 
-        Assert.isTrue(retryDeadLetters.size() == accessTemplate
-                        .getRetryDeadLetterAccess().insertBatch(retryDeadLetters),
+        Assert.isTrue(retryDeadLetters.size() == retryDeadLetterDao.insertBatch(retryDeadLetters),
                 () -> new SilenceJobServerException("插入死信队列失败 [{}]", JSON.toJSONString(retryDeadLetters)));
 
-        TaskAccess<Retry> retryTaskAccess = accessTemplate.getRetryAccess();
-        Assert.isTrue(retries.size() == retryTaskAccess.delete(new LambdaQueryWrapper<Retry>()
+        Assert.isTrue(retries.size() == retryDao.delete(new LambdaQueryWrapper<Retry>()
                         .in(Retry::getId, StreamUtils.toList(retries, RetryPartitionTask::getId))),
                 () -> new SilenceJobServerException("删除重试数据失败 [{}]", JSON.toJSONString(retries)));
 

@@ -24,9 +24,10 @@ import com.old.silence.job.server.domain.model.GroupConfig;
 import com.old.silence.job.server.domain.model.Retry;
 import com.old.silence.job.server.domain.model.RetrySceneConfig;
 import com.old.silence.job.server.domain.model.RetryTask;
-import com.old.silence.job.server.domain.service.AccessTemplate;
-import com.old.silence.job.server.domain.service.task.TaskAccess;
 import com.old.silence.job.server.exception.SilenceJobServerException;
+import com.old.silence.job.server.infrastructure.persistence.dao.GroupConfigDao;
+import com.old.silence.job.server.infrastructure.persistence.dao.RetryDao;
+import com.old.silence.job.server.infrastructure.persistence.dao.RetrySceneConfigDao;
 import com.old.silence.job.server.retry.task.support.RetryTaskConverter;
 import com.old.silence.job.server.retry.task.support.RetryTaskLogConverter;
 
@@ -45,11 +46,16 @@ import java.util.stream.Collectors;
 
 public abstract class AbstractGenerator implements TaskGenerator {
 
-    protected final AccessTemplate accessTemplate;
+    protected final RetryDao retryDao;
+    protected final RetrySceneConfigDao retrySceneConfigDao;
+    protected final GroupConfigDao groupConfigDao;
     private final SystemProperties systemProperties;
 
-    protected AbstractGenerator(AccessTemplate accessTemplate, SystemProperties systemProperties) {
-        this.accessTemplate = accessTemplate;
+    protected AbstractGenerator(RetryDao retryDao, RetrySceneConfigDao retrySceneConfigDao,
+                              GroupConfigDao groupConfigDao, SystemProperties systemProperties) {
+        this.retryDao = retryDao;
+        this.retrySceneConfigDao = retrySceneConfigDao;
+        this.groupConfigDao = groupConfigDao;
         this.systemProperties = systemProperties;
     }
 
@@ -66,10 +72,8 @@ public abstract class AbstractGenerator implements TaskGenerator {
 
         Set<String> idempotentIdSet = StreamUtils.toSet(taskInfos, TaskContext.TaskInfo::getIdempotentId);
 
-        TaskAccess<Retry> retryTaskAccess = accessTemplate.getRetryAccess();
-
         // 获取相关的任务，用户幂等校验
-        List<Retry> retries = retryTaskAccess.list(new LambdaQueryWrapper<Retry>()
+        List<Retry> retries = retryDao.selectList(new LambdaQueryWrapper<Retry>()
                         .eq(Retry::getNamespaceId, taskContext.getNamespaceId())
                         .eq(Retry::getGroupName, taskContext.getGroupName())
                         .eq(Retry::getSceneName, taskContext.getSceneName())
@@ -92,7 +96,7 @@ public abstract class AbstractGenerator implements TaskGenerator {
         }
 
         Assert.isTrue(
-                waitInsertTasks.size() == retryTaskAccess.insertBatch(waitInsertTasks),
+                waitInsertTasks.size() == retryDao.insertBatch(waitInsertTasks),
                 () -> new SilenceJobServerException("failed to report data"));
     }
 
@@ -161,13 +165,19 @@ public abstract class AbstractGenerator implements TaskGenerator {
     protected abstract RetryStatus initStatus(TaskContext taskContext);
 
     private RetrySceneConfig checkAndInitScene(TaskContext taskContext) {
-        RetrySceneConfig retrySceneConfig = accessTemplate.getSceneConfigAccess()
-                .getSceneConfigByGroupNameAndSceneName(taskContext.getGroupName(), taskContext.getSceneName(),
-                        taskContext.getNamespaceId());
+        RetrySceneConfig retrySceneConfig = retrySceneConfigDao.selectOne(
+                new LambdaQueryWrapper<RetrySceneConfig>()
+                        .eq(RetrySceneConfig::getGroupName, taskContext.getGroupName())
+                        .eq(RetrySceneConfig::getSceneName, taskContext.getSceneName())
+                        .eq(RetrySceneConfig::getNamespaceId, taskContext.getNamespaceId())
+        );
         if (Objects.isNull(retrySceneConfig)) {
 
-            GroupConfig groupConfig = accessTemplate.getGroupConfigAccess()
-                    .getGroupConfigByGroupName(taskContext.getGroupName(), taskContext.getNamespaceId());
+            GroupConfig groupConfig = groupConfigDao.selectOne(
+                    new LambdaQueryWrapper<GroupConfig>()
+                            .eq(GroupConfig::getGroupName, taskContext.getGroupName())
+                            .eq(GroupConfig::getNamespaceId, taskContext.getNamespaceId())
+            );
             if (Objects.isNull(groupConfig)) {
                 throw new SilenceJobServerException(
                         "failed to report data, no group configuration found. groupName:[{}]", taskContext.getGroupName());
@@ -200,12 +210,12 @@ public abstract class AbstractGenerator implements TaskGenerator {
         retrySceneConfig.setGroupName(groupName);
         retrySceneConfig.setSceneName(sceneName);
         retrySceneConfig.setSceneStatus(true);
-        retrySceneConfig.setBackOff(EnumValueFactory.getRequired(BackoffType.class, WaitStrategies.WaitStrategyEnum.DELAY_LEVEL.getValue()));
+        retrySceneConfig.setBackOff(EnumValueFactory.getRequired(BackoffType.class, WaitStrategyEnum.DELAY_LEVEL.getValue()));
         retrySceneConfig.setMaxRetryCount(DelayLevelEnum._21.getLevel());
         retrySceneConfig.setCbStatus(false);
         retrySceneConfig.setCbMaxCount(DelayLevelEnum._16.getLevel());
         retrySceneConfig.setDescription("自动初始化场景");
-        Assert.isTrue(1 == accessTemplate.getSceneConfigAccess().insert(retrySceneConfig),
+        Assert.isTrue(1 == retrySceneConfigDao.insert(retrySceneConfig),
                 () -> new SilenceJobServerException("init scene error"));
         return retrySceneConfig;
     }

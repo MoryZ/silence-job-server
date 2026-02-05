@@ -66,7 +66,7 @@ public class RetryTaskMoreThresholdAlarmSchedule extends AbstractRetryTaskAlarmS
 
         // x分钟内、x组、x场景进入重试任务的数据量
         long count = retryDao
-                .count(new LambdaQueryWrapper<Retry>()
+                .selectCount(new LambdaQueryWrapper<Retry>()
                                 .eq(Retry::getNamespaceId, partitionTask.getNamespaceId())
                                 .eq(Retry::getGroupName, partitionTask.getGroupName())
                                 .eq(Retry::getSceneName, partitionTask.getSceneName())

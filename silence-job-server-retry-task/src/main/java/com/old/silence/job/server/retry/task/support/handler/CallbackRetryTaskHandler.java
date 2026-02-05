@@ -15,8 +15,8 @@ import com.old.silence.job.server.common.strategy.WaitStrategies.WaitStrategyEnu
 import com.old.silence.job.server.common.util.DateUtils;
 import com.old.silence.job.server.domain.model.Retry;
 import com.old.silence.job.server.domain.model.RetrySceneConfig;
-import com.old.silence.job.server.domain.service.AccessTemplate;
 import com.old.silence.job.server.exception.SilenceJobServerException;
+import com.old.silence.job.server.infrastructure.persistence.dao.RetryDao;
 import com.old.silence.job.server.retry.task.support.RetryTaskConverter;
 
 import java.time.Instant;
@@ -32,10 +32,10 @@ import java.util.Objects;
 public class CallbackRetryTaskHandler {
 
     private static final Logger log = LoggerFactory.getLogger(CallbackRetryTaskHandler.class);
-    private final AccessTemplate accessTemplate;
+    private final RetryDao retryDao;
 
-    public CallbackRetryTaskHandler(AccessTemplate accessTemplate) {
-        this.accessTemplate = accessTemplate;
+    public CallbackRetryTaskHandler(RetryDao retryDao) {
+        this.retryDao = retryDao;
     }
 
     /**
@@ -71,7 +71,7 @@ public class CallbackRetryTaskHandler {
         callbackRetry.setNextTriggerAt(waitStrategy.computeTriggerTime(waitStrategyContext));
 
         try {
-            Assert.isTrue(1 == accessTemplate.getRetryAccess().insert(callbackRetry),
+            Assert.isTrue(1 == retryDao.insert(callbackRetry),
                     () -> new SilenceJobServerException("failed to report data"));
         } catch (DuplicateKeyException e) {
             log.warn("回调数据重复新增. [{}]", JSON.toJSONString(callbackRetry));

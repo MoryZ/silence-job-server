@@ -16,7 +16,6 @@ import com.old.silence.job.server.common.client.CommonRpcClient;
 import com.old.silence.job.server.common.dto.ConfigSyncTask;
 import com.old.silence.job.server.common.dto.RegisterNodeInfo;
 import com.old.silence.job.server.common.rpc.client.RequestBuilder;
-import com.old.silence.job.server.domain.service.AccessTemplate;
 
 /**
  * 版本同步

@@ -26,9 +26,9 @@ import com.old.silence.job.server.common.util.PartitionTaskUtils;
 import com.old.silence.job.server.domain.model.GroupConfig;
 import com.old.silence.job.server.domain.model.Retry;
 import com.old.silence.job.server.domain.model.RetrySceneConfig;
-import com.old.silence.job.server.domain.service.AccessTemplate;
 import com.old.silence.job.server.infrastructure.persistence.dao.GroupConfigDao;
 import com.old.silence.job.server.infrastructure.persistence.dao.RetryDao;
+import com.old.silence.job.server.infrastructure.persistence.dao.RetrySceneConfigDao;
 import com.old.silence.job.server.common.pekko.ActorGenerator;
 import com.old.silence.job.server.retry.task.dto.RetryPartitionTask;
 import com.old.silence.job.server.retry.task.dto.RetryTaskPrepareDTO;
@@ -51,16 +51,16 @@ public class ScanRetryActor extends AbstractActor {
 
     private static final Logger log = LoggerFactory.getLogger(ScanRetryActor.class);
     private final SystemProperties systemProperties;
-    private final AccessTemplate accessTemplate;
+    private final RetrySceneConfigDao retrySceneConfigDao;
     private final RetryDao retryDao;
     private final GroupConfigDao groupConfigDao;
     private final RateLimiterHandler rateLimiterHandler;
 
-    public ScanRetryActor(SystemProperties systemProperties, AccessTemplate accessTemplate,
+    public ScanRetryActor(SystemProperties systemProperties, RetrySceneConfigDao retrySceneConfigDao,
                           RetryDao retryDao, GroupConfigDao groupConfigDao,
                           RateLimiterHandler rateLimiterHandler) {
         this.systemProperties = systemProperties;
-        this.accessTemplate = accessTemplate;
+        this.retrySceneConfigDao = retrySceneConfigDao;
         this.retryDao = retryDao;
         this.groupConfigDao = groupConfigDao;
         this.rateLimiterHandler = rateLimiterHandler;
@@ -149,8 +149,8 @@ public class ScanRetryActor extends AbstractActor {
     private Map<String, RetrySceneConfig> getSceneConfigMap(List<? extends PartitionTask> partitionTasks) {
         Set<String> sceneNameSet = StreamUtils.toSet(partitionTasks,
                 partitionTask -> ((RetryPartitionTask) partitionTask).getSceneName());
-        List<RetrySceneConfig> retrySceneConfigs = accessTemplate.getSceneConfigAccess()
-                .list(new LambdaQueryWrapper<RetrySceneConfig>()
+        List<RetrySceneConfig> retrySceneConfigs = retrySceneConfigDao
+                .selectList(new LambdaQueryWrapper<RetrySceneConfig>()
                         .select(RetrySceneConfig::getBackOff, RetrySceneConfig::getTriggerInterval,
                                 RetrySceneConfig::getBlockStrategy, RetrySceneConfig::getSceneName,
                                 RetrySceneConfig::getCbTriggerType, RetrySceneConfig::getCbTriggerInterval,
@@ -202,16 +202,16 @@ public class ScanRetryActor extends AbstractActor {
     }
 
     public List<RetryPartitionTask> listAvailableTasks(Long startId, Set<Integer> buckets) {
-        List<Retry> retries = accessTemplate.getRetryAccess()
-                .listPage(new PageDTO<>(0, systemProperties.getRetryPullPageSize()),
-                        new LambdaQueryWrapper<Retry>()
-                                .select(Retry::getId, Retry::getNextTriggerAt, Retry::getGroupName, Retry::getRetryCount,
-                                        Retry::getSceneName, Retry::getNamespaceId, Retry::getTaskType)
-                                .eq(Retry::getRetryStatus, RetryStatus.RUNNING.getValue())
-                                .in(Retry::getBucketIndex, buckets)
-                                .le(Retry::getNextTriggerAt, DateUtils.toNowMilli() + DateUtils.toEpochMilli(SystemConstants.SCHEDULE_PERIOD))
-                                .gt(Retry::getId, startId)
-                                .orderByAsc(Retry::getId))
+        List<Retry> retries = retryDao.selectPage(
+                new PageDTO<>(0, systemProperties.getRetryPullPageSize()),
+                new LambdaQueryWrapper<Retry>()
+                        .select(Retry::getId, Retry::getNextTriggerAt, Retry::getGroupName, Retry::getRetryCount,
+                                Retry::getSceneName, Retry::getNamespaceId, Retry::getTaskType)
+                        .eq(Retry::getRetryStatus, RetryStatus.RUNNING.getValue())
+                        .in(Retry::getBucketIndex, buckets)
+                        .le(Retry::getNextTriggerAt, DateUtils.toNowMilli() + DateUtils.toEpochMilli(SystemConstants.SCHEDULE_PERIOD))
+                        .gt(Retry::getId, startId)
+                        .orderByAsc(Retry::getId))
                 .getRecords();
 
         // 过滤已关闭的组

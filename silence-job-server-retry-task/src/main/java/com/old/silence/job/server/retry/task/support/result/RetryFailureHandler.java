@@ -3,6 +3,7 @@ package com.old.silence.job.server.retry.task.support.result;
 import cn.hutool.core.lang.Assert;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.support.TransactionTemplate;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.old.silence.job.common.context.SilenceSpringContext;
 import com.old.silence.job.common.enums.JobNotifyScene;
 import com.old.silence.job.common.enums.RetryOperationReason;
@@ -12,9 +13,9 @@ import com.old.silence.job.common.enums.SystemTaskType;
 import com.old.silence.job.server.domain.model.Retry;
 import com.old.silence.job.server.domain.model.RetrySceneConfig;
 import com.old.silence.job.server.domain.model.RetryTask;
-import com.old.silence.job.server.domain.service.AccessTemplate;
 import com.old.silence.job.server.exception.SilenceJobServerException;
 import com.old.silence.job.server.infrastructure.persistence.dao.RetryDao;
+import com.old.silence.job.server.infrastructure.persistence.dao.RetrySceneConfigDao;
 import com.old.silence.job.server.infrastructure.persistence.dao.RetryTaskDao;
 import com.old.silence.job.server.retry.task.dto.RetryTaskFailAlarmEventDTO;
 import com.old.silence.job.server.retry.task.support.RetryTaskConverter;
@@ -35,15 +36,15 @@ import static com.old.silence.job.common.enums.RetryTaskStatus.NOT_SUCCESS;
 @Component
 
 public class RetryFailureHandler extends AbstractRetryResultHandler {
-    private final AccessTemplate accessTemplate;
+    private final RetrySceneConfigDao retrySceneConfigDao;
     private final CallbackRetryTaskHandler callbackRetryTaskHandler;
     private final TransactionTemplate transactionTemplate;
     private final RetryTaskDao retryTaskDao;
     private final RetryDao retryDao;
 
-    public RetryFailureHandler(AccessTemplate accessTemplate, CallbackRetryTaskHandler callbackRetryTaskHandler,
+    public RetryFailureHandler(RetrySceneConfigDao retrySceneConfigDao, CallbackRetryTaskHandler callbackRetryTaskHandler,
                                TransactionTemplate transactionTemplate, RetryTaskDao retryTaskDao, RetryDao retryDao) {
-        this.accessTemplate = accessTemplate;
+        this.retrySceneConfigDao = retrySceneConfigDao;
         this.callbackRetryTaskHandler = callbackRetryTaskHandler;
         this.transactionTemplate = transactionTemplate;
         this.retryTaskDao = retryTaskDao;
@@ -59,9 +60,12 @@ public class RetryFailureHandler extends AbstractRetryResultHandler {
 
     @Override
     public void doHandler(RetryResultContext context) {
-        RetrySceneConfig retrySceneConfig =
-                accessTemplate.getSceneConfigAccess().getSceneConfigByGroupNameAndSceneName(
-                        context.getGroupName(), context.getSceneName(), context.getNamespaceId());
+        RetrySceneConfig retrySceneConfig = retrySceneConfigDao.selectOne(
+                new LambdaQueryWrapper<RetrySceneConfig>()
+                        .eq(RetrySceneConfig::getGroupName, context.getGroupName())
+                        .eq(RetrySceneConfig::getSceneName, context.getSceneName())
+                        .eq(RetrySceneConfig::getNamespaceId, context.getNamespaceId())
+        );
 
         Retry retry = retryDao.selectById(context.getRetryId());
         transactionTemplate.execute(status -> {
