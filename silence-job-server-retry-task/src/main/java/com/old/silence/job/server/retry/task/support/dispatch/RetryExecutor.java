@@ -27,7 +27,7 @@ import com.old.silence.job.server.domain.model.RetryTask;
 import com.old.silence.job.server.exception.SilenceJobServerException;
 import com.old.silence.job.server.infrastructure.persistence.dao.RetryDao;
 import com.old.silence.job.server.infrastructure.persistence.dao.RetryTaskDao;
-import com.old.silence.job.server.infrastructure.persistence.dao.SceneConfigDao;
+import com.old.silence.job.server.infrastructure.persistence.dao.RetrySceneConfigDao;
 import com.old.silence.job.server.common.pekko.ActorGenerator;
 import com.old.silence.job.server.retry.task.dto.RequestCallbackExecutorDTO;
 import com.old.silence.job.server.retry.task.dto.RequestRetryExecutorDTO;
@@ -50,16 +50,16 @@ import java.util.Objects;
 public class RetryExecutor extends AbstractActor {
     private final RetryDao retryDao;
     private final RetryTaskDao retryTaskDao;
-    private final SceneConfigDao sceneConfigDao;
+    private final RetrySceneConfigDao retrySceneConfigDao;
     private final ClientNodeAllocateHandler clientNodeAllocateHandler;
     private final RetryTaskStopHandler retryTaskStopHandler;
 
     public RetryExecutor(RetryDao retryDao, RetryTaskDao retryTaskDao,
-                         SceneConfigDao sceneConfigDao, ClientNodeAllocateHandler clientNodeAllocateHandler,
+                         RetrySceneConfigDao retrySceneConfigDao, ClientNodeAllocateHandler clientNodeAllocateHandler,
                          RetryTaskStopHandler retryTaskStopHandler) {
         this.retryDao = retryDao;
         this.retryTaskDao = retryTaskDao;
-        this.sceneConfigDao = sceneConfigDao;
+        this.retrySceneConfigDao = retrySceneConfigDao;
         this.clientNodeAllocateHandler = clientNodeAllocateHandler;
         this.retryTaskStopHandler = retryTaskStopHandler;
     }
@@ -108,7 +108,7 @@ public class RetryExecutor extends AbstractActor {
             return;
         }
 
-        RetrySceneConfig retrySceneConfig = sceneConfigDao.selectOne(new LambdaQueryWrapper<RetrySceneConfig>()
+        RetrySceneConfig retrySceneConfig = retrySceneConfigDao.selectOne(new LambdaQueryWrapper<RetrySceneConfig>()
                 .eq(RetrySceneConfig::getSceneName, retry.getSceneName())
                 .eq(RetrySceneConfig::getGroupName, retry.getGroupName())
                 .eq(RetrySceneConfig::getNamespaceId, retry.getNamespaceId())
