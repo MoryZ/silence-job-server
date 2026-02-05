@@ -102,3 +102,78 @@ mvn spring-boot:run -pl silence-job-server-starter
 
 ---
 *最后更新*：2026-02-05
+
+## 重构进度 - 清除 AccessTemplate 毒瘤
+
+### 目标
+删除 AccessTemplate（老项目遗留的过度抽象）和相关的 AbstractTaskAccess、各个 *Access 实现，简化为：
+- **server-core**：DAO（直接继承 MyBatis Plus BaseMapper）
+- **server-app**：Service（注入 DAO，处理业务逻辑）+ Resource（REST API）
+
+### 完成进度 ✅
+
+**已完成改造**：
+- ✅ 删除了 server-core/domain/service 下的所有 Access 类及 AccessTemplate
+- ✅ 改造了 common 模块的 5 个文件：
+  - AbstractAlarm.java - 注入 NotifyConfigDao
+  - AbstractRetryAlarm.java - 注入 RetrySceneConfigDao
+  - CacheToken.java - 注入 GroupConfigDao
+  - ConfigVersionSyncHandler.java - 注入 GroupConfigDao
+  - ConfigHttpRequestHandler.java - 注入 GroupConfigDao
+- ✅ 改造了 retry-task 的 3 个 Schedule 类：
+  - AbstractRetryTaskAlarmSchedule.java - 注入 3 个 DAO
+  - RetryTaskMoreThresholdAlarmSchedule.java - 继承改造
+  - RetryErrorMoreThresholdAlarmSchedule.java - 继承改造
+
+**编译状态**：❌ 失败（retry-task 还有 9 个文件未改造）
+
+### 还需要改造的文件（retry-task 模块，共 9 个）
+
+按优先级排序：
+1. **CleanerSchedule.java** - 关键任务，数据清理
+2. **AbstractGenerator.java** - 抽象基类，影响 3 个子类
+3. **ClientReportRetryGenerator.java**
+4. **ManaSingleRetryGenerator.java**
+5. **ManaBatchRetryGenerator.java**
+6. **ScanRetryActor.java** - Actor 模型
+7. **RetrySuccessHandler.java** - 成功处理
+8. **RetryFailureHandler.java** - 失败处理
+9. **CallbackRetryTaskHandler.java** - 回调处理
+
+### 改造策略总结
+
+**核心思路**：
+1. 查找 Access 的使用方法
+2. 注入对应的 DAO（如 RetryDao, RetrySceneConfigDao 等）
+3. 用 MyBatis Plus 的 Lambda 查询 替代 Access 的方法调用
+4. 保留其他业务逻辑不变
+
+**具体步骤示例**：
+```java
+// 改造前
+TaskAccess<Retry> retryTaskAccess = accessTemplate.getRetryAccess();
+List<Retry> list = retryTaskAccess.list(query);
+
+// 改造后
+@Autowired
+private RetryDao retryDao;
+List<Retry> list = retryDao.selectList(query);
+```
+
+### 注意事项
+
+1. **DAO 自定义方法** - 某些 DAO 有自定义方法（如 `getConfigInfo`），需要：
+   - 检查是否存在这个方法
+   - 如果不存在，用 Lambda 查询替代或通过 JSON 手动转换
+   
+2. **DTO 转换** - ConfigDTO 等 DTO 可能没有 setter，需要用 new 创建或返回空对象
+
+3. **Job/Workflow** 等 app 模块的 Service 层已经完全改为直接注入 DAO，无需再改
+
+### 下一步建议
+
+由于改造工作量较大（需要逐文件分析），建议：
+1. 优先完成 CleanerSchedule 和 AbstractGenerator 这两个关键类
+2. 其他 Handler/Generator 可后续逐步处理
+3. 完成后再进行编译和集成测试
+

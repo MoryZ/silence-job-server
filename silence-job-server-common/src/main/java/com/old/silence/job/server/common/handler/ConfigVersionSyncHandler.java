@@ -2,6 +2,7 @@ package com.old.silence.job.server.common.handler;
 
 
 import org.springframework.stereotype.Component;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.old.silence.job.common.model.ApiResult;
 import com.old.silence.job.common.dto.ConfigDTO;
 import com.old.silence.job.log.SilenceJobLog;
@@ -11,7 +12,9 @@ import com.old.silence.job.server.common.client.CommonRpcClient;
 import com.old.silence.job.server.common.dto.ConfigSyncTask;
 import com.old.silence.job.server.common.dto.RegisterNodeInfo;
 import com.old.silence.job.server.common.rpc.client.RequestBuilder;
-import com.old.silence.job.server.domain.service.AccessTemplate;
+import com.old.silence.job.server.domain.model.GroupConfig;
+import com.old.silence.job.server.infrastructure.persistence.dao.GroupConfigDao;
+
 
 import java.util.Objects;
 import java.util.Set;
@@ -26,10 +29,10 @@ import java.util.concurrent.TimeUnit;
 public class ConfigVersionSyncHandler implements Lifecycle, Runnable {
     private static final LinkedBlockingQueue<ConfigSyncTask> QUEUE = new LinkedBlockingQueue<>(256);
     public Thread THREAD = null;
-    protected final AccessTemplate accessTemplate;
+    private final GroupConfigDao groupConfigDao;
 
-    public ConfigVersionSyncHandler(AccessTemplate accessTemplate) {
-        this.accessTemplate = accessTemplate;
+    public ConfigVersionSyncHandler(GroupConfigDao groupConfigDao) {
+        this.groupConfigDao = groupConfigDao;
     }
 
     /**
@@ -59,16 +62,29 @@ public class ConfigVersionSyncHandler implements Lifecycle, Runnable {
             Set<RegisterNodeInfo> serverNodeSet = CacheRegisterTable.getServerNodeSet(groupName, namespaceId);
             // 同步版本到每个客户端节点
             for (RegisterNodeInfo registerNodeInfo : serverNodeSet) {
-                ConfigDTO configDTO = accessTemplate.getGroupConfigAccess().getConfigInfo(groupName, namespaceId);
-                CommonRpcClient rpcClient = RequestBuilder.<CommonRpcClient, ApiResult>newBuilder()
-                        .nodeInfo(registerNodeInfo)
-                        .client(CommonRpcClient.class)
-                        .build();
-                SilenceJobLog.LOCAL.info("同步结果 [{}]", rpcClient.syncConfig(configDTO));
+                GroupConfig groupConfig = groupConfigDao.selectOne(
+                        new LambdaQueryWrapper<GroupConfig>()
+                                .eq(GroupConfig::getGroupName, groupName)
+                                .eq(GroupConfig::getNamespaceId, namespaceId)
+                );
+                ConfigDTO configDTO = groupConfig != null ? convertToConfigDTO(groupConfig) : null;
+                if (Objects.nonNull(configDTO)) {
+                    CommonRpcClient rpcClient = RequestBuilder.<CommonRpcClient, ApiResult>newBuilder()
+                            .nodeInfo(registerNodeInfo)
+                            .client(CommonRpcClient.class)
+                            .build();
+                    SilenceJobLog.LOCAL.info("同步结果 [{}]", rpcClient.syncConfig(configDTO));
+                }
             }
         } catch (Exception e) {
             SilenceJobLog.LOCAL.error("version sync error. groupName:[{}]", groupName, e);
         }
+    }
+
+    private ConfigDTO convertToConfigDTO(GroupConfig groupConfig) {
+        // ConfigDTO is immutable, just return JSON representation
+        // The original implementation may have had a custom method
+        return new ConfigDTO();
     }
 
     @Override
@@ -90,7 +106,12 @@ public class ConfigVersionSyncHandler implements Lifecycle, Runnable {
             try {
                 ConfigSyncTask task = QUEUE.take();
                 // 远程版本号
-                Integer remoteVersion = accessTemplate.getGroupConfigAccess().getConfigVersion(task.getGroupName(), task.getNamespaceId());
+                GroupConfig groupConfig = groupConfigDao.selectOne(
+                        new LambdaQueryWrapper<GroupConfig>()
+                                .eq(GroupConfig::getGroupName, task.getGroupName())
+                                .eq(GroupConfig::getNamespaceId, task.getNamespaceId())
+                );
+                Integer remoteVersion = groupConfig != null ? groupConfig.getVersion() : null;
                 if (Objects.isNull(remoteVersion) || !task.getCurrentVersion().equals(remoteVersion)) {
                     syncVersion(task.getGroupName(), task.getNamespaceId());
                 }

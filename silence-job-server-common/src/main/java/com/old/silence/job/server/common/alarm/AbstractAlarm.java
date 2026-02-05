@@ -24,7 +24,7 @@ import com.old.silence.job.server.common.dto.NotifyConfigInfo;
 import com.old.silence.job.server.common.dto.NotifyConfigInfo.RecipientInfo;
 import com.old.silence.job.server.domain.model.NotifyConfig;
 import com.old.silence.job.server.domain.model.NotifyRecipient;
-import com.old.silence.job.server.domain.service.AccessTemplate;
+import com.old.silence.job.server.infrastructure.persistence.dao.NotifyConfigDao;
 import com.old.silence.job.server.infrastructure.persistence.dao.NotifyRecipientDao;
 
 import java.math.BigInteger;
@@ -48,7 +48,7 @@ public abstract class AbstractAlarm<E extends ApplicationEvent, A extends AlarmI
     @Qualifier("alarmExecutorService")
     protected TaskScheduler taskScheduler;
     @Autowired
-    protected AccessTemplate accessTemplate;
+    protected NotifyConfigDao notifyConfigDao;
     @Autowired
     protected NotifyRecipientDao notifyRecipientDao;
 
@@ -95,7 +95,7 @@ public abstract class AbstractAlarm<E extends ApplicationEvent, A extends AlarmI
         }
 
         // 批量获取所需的通知配置
-        List<NotifyConfig> notifyConfigs = accessTemplate.getNotifyConfigAccess().list(
+        List<NotifyConfig> notifyConfigs = notifyConfigDao.selectList(
                 new LambdaQueryWrapper<NotifyConfig>()
                         .eq(NotifyConfig::getNotifyStatus, true)
                         .in(NotifyConfig::getNotifyScene, notifyScene)

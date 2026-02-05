@@ -14,8 +14,9 @@ import com.old.silence.job.server.common.util.PartitionTaskUtils;
 import com.old.silence.job.server.domain.model.NotifyConfig;
 import com.old.silence.job.server.domain.model.NotifyRecipient;
 import com.old.silence.job.server.domain.model.RetrySceneConfig;
-import com.old.silence.job.server.domain.service.AccessTemplate;
+import com.old.silence.job.server.infrastructure.persistence.dao.NotifyConfigDao;
 import com.old.silence.job.server.infrastructure.persistence.dao.NotifyRecipientDao;
+import com.old.silence.job.server.infrastructure.persistence.dao.RetrySceneConfigDao;
 import com.old.silence.job.server.retry.task.dto.NotifyConfigDTO;
 import com.old.silence.job.server.retry.task.dto.RetrySceneConfigPartitionTask;
 import com.old.silence.job.server.retry.task.support.RetryTaskConverter;
@@ -29,11 +30,13 @@ import java.util.Set;
 
 
 public abstract class AbstractRetryTaskAlarmSchedule extends AbstractSchedule implements Lifecycle {
-    protected final AccessTemplate accessTemplate;
+    private final RetrySceneConfigDao retrySceneConfigDao;
+    private final NotifyConfigDao notifyConfigDao;
     private final NotifyRecipientDao notifyRecipientDao;
 
-    protected AbstractRetryTaskAlarmSchedule(AccessTemplate accessTemplate, NotifyRecipientDao notifyRecipientDao) {
-        this.accessTemplate = accessTemplate;
+    protected AbstractRetryTaskAlarmSchedule(RetrySceneConfigDao retrySceneConfigDao, NotifyConfigDao notifyConfigDao, NotifyRecipientDao notifyRecipientDao) {
+        this.retrySceneConfigDao = retrySceneConfigDao;
+        this.notifyConfigDao = notifyConfigDao;
         this.notifyRecipientDao = notifyRecipientDao;
     }
 
@@ -65,14 +68,14 @@ public abstract class AbstractRetryTaskAlarmSchedule extends AbstractSchedule im
     protected abstract RetryNotifyScene getNotifyScene();
 
     /**
-     * 获取需要处理的配置信息
+     * 循环场景信息
      *
      * @param startId 偏移id
      * @return 需要处理的场景列表
      */
     protected List<RetrySceneConfigPartitionTask> queryPartitionList(Long startId) {
-        List<RetrySceneConfig> retrySceneConfigList = accessTemplate.getSceneConfigAccess()
-                .listPage(new PageDTO<>(0, 500),
+        List<RetrySceneConfig> retrySceneConfigList = retrySceneConfigDao
+                .selectPage(new PageDTO<>(0, 500),
                         new LambdaQueryWrapper<RetrySceneConfig>()
                                 .gt(RetrySceneConfig::getId, startId)
                                 .eq(RetrySceneConfig::getSceneStatus, true)
@@ -105,8 +108,8 @@ public abstract class AbstractRetryTaskAlarmSchedule extends AbstractSchedule im
         }
 
         // 从DB中获取通知配置信息
-        List<NotifyConfigDTO> notifyConfigs = RetryTaskConverter.INSTANCE.toNotifyConfigDTO(accessTemplate.getNotifyConfigAccess()
-                .list(new LambdaQueryWrapper<NotifyConfig>()
+        List<NotifyConfigDTO> notifyConfigs = RetryTaskConverter.INSTANCE.toNotifyConfigDTO(notifyConfigDao
+                .selectList(new LambdaQueryWrapper<NotifyConfig>()
                         .in(NotifyConfig::getId, retryNotifyIds)
                         .eq(NotifyConfig::getNotifyStatus, true)
                         .eq(NotifyConfig::getNotifyScene, getNotifyScene())

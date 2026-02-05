@@ -3,9 +3,12 @@ package com.old.silence.job.server.common.alarm;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.ApplicationEvent;
 import com.alibaba.fastjson2.JSON;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.old.silence.job.server.common.dto.RetryAlarmInfo;
 import com.old.silence.job.server.common.triple.ImmutableTriple;
 import com.old.silence.job.server.domain.model.RetrySceneConfig;
+import com.old.silence.job.server.infrastructure.persistence.dao.RetrySceneConfigDao;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -20,6 +23,8 @@ import java.util.stream.Collectors;
 
 
 public abstract class AbstractRetryAlarm<E extends ApplicationEvent> extends AbstractAlarm<E, RetryAlarmInfo> {
+    @Autowired
+    protected RetrySceneConfigDao retrySceneConfigDao;
 
     @Override
     protected Map<BigInteger, List<RetryAlarmInfo>> convertAlarmDTO(List<RetryAlarmInfo> retryAlarmInfoList, Set<Integer> notifyScene) {
@@ -35,9 +40,14 @@ public abstract class AbstractRetryAlarm<E extends ApplicationEvent> extends Abs
         }
 
         // 按组名、场景名、命名空间分组
-        Map<ImmutableTriple<String, String, String>, RetrySceneConfig> retrySceneConfigMap = accessTemplate.getSceneConfigAccess()
-                .getSceneConfigByGroupNameAndSceneNameList(
-                groupNames, sceneNames, namespaceIds)
+        List<RetrySceneConfig> sceneConfigs = retrySceneConfigDao.selectList(
+                new LambdaQueryWrapper<RetrySceneConfig>()
+                        .in(RetrySceneConfig::getGroupName, groupNames)
+                        .in(RetrySceneConfig::getSceneName, sceneNames)
+                        .in(RetrySceneConfig::getNamespaceId, namespaceIds)
+        );
+        
+        Map<ImmutableTriple<String, String, String>, RetrySceneConfig> retrySceneConfigMap = sceneConfigs
                 .stream().collect(Collectors.toMap(i -> ImmutableTriple.of(
                         i.getGroupName(),
                         i.getSceneName(),

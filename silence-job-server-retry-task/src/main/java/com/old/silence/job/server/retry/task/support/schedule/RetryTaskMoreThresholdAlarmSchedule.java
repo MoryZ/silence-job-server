@@ -10,8 +10,10 @@ import com.old.silence.job.common.util.EnvironmentUtils;
 import com.old.silence.job.server.common.Lifecycle;
 import com.old.silence.job.server.common.util.DateUtils;
 import com.old.silence.job.server.domain.model.Retry;
-import com.old.silence.job.server.domain.service.AccessTemplate;
+import com.old.silence.job.server.infrastructure.persistence.dao.NotifyConfigDao;
 import com.old.silence.job.server.infrastructure.persistence.dao.NotifyRecipientDao;
+import com.old.silence.job.server.infrastructure.persistence.dao.RetryDao;
+import com.old.silence.job.server.infrastructure.persistence.dao.RetrySceneConfigDao;
 import com.old.silence.job.server.retry.task.dto.NotifyConfigDTO;
 import com.old.silence.job.server.retry.task.dto.RetrySceneConfigPartitionTask;
 
@@ -40,9 +42,14 @@ public class RetryTaskMoreThresholdAlarmSchedule extends AbstractRetryTaskAlarmS
                     "> 告警时间:{}  \n" +
                     "> **共计:{}**  \n";
 
-    protected RetryTaskMoreThresholdAlarmSchedule(AccessTemplate accessTemplate,
-                                                  NotifyRecipientDao notifyRecipientDao) {
-        super(accessTemplate, notifyRecipientDao);
+    private final RetryDao retryDao;
+
+    protected RetryTaskMoreThresholdAlarmSchedule(RetrySceneConfigDao retrySceneConfigDao,
+                                                  NotifyConfigDao notifyConfigDao,
+                                                  NotifyRecipientDao notifyRecipientDao,
+                                                  RetryDao retryDao) {
+        super(retrySceneConfigDao, notifyConfigDao, notifyRecipientDao);
+        this.retryDao = retryDao;
     }
 
     @Override
@@ -58,7 +65,7 @@ public class RetryTaskMoreThresholdAlarmSchedule extends AbstractRetryTaskAlarmS
     protected void doSendAlarm(RetrySceneConfigPartitionTask partitionTask, Map<BigInteger, NotifyConfigDTO> notifyConfigInfo) {
 
         // x分钟内、x组、x场景进入重试任务的数据量
-        long count = accessTemplate.getRetryAccess()
+        long count = retryDao
                 .count(new LambdaQueryWrapper<Retry>()
                                 .eq(Retry::getNamespaceId, partitionTask.getNamespaceId())
                                 .eq(Retry::getGroupName, partitionTask.getGroupName())

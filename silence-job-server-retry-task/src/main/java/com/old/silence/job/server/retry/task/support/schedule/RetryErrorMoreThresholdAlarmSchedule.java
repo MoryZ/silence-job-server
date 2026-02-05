@@ -12,8 +12,10 @@ import com.old.silence.job.common.util.EnvironmentUtils;
 import com.old.silence.job.server.common.Lifecycle;
 import com.old.silence.job.server.common.util.DateUtils;
 import com.old.silence.job.server.domain.model.Retry;
-import com.old.silence.job.server.domain.service.AccessTemplate;
+import com.old.silence.job.server.infrastructure.persistence.dao.NotifyConfigDao;
 import com.old.silence.job.server.infrastructure.persistence.dao.NotifyRecipientDao;
+import com.old.silence.job.server.infrastructure.persistence.dao.RetryDao;
+import com.old.silence.job.server.infrastructure.persistence.dao.RetrySceneConfigDao;
 import com.old.silence.job.server.retry.task.dto.NotifyConfigDTO;
 import com.old.silence.job.server.retry.task.dto.RetrySceneConfigPartitionTask;
 
@@ -40,9 +42,14 @@ public class RetryErrorMoreThresholdAlarmSchedule extends AbstractRetryTaskAlarm
                     "> 时间窗口:{} ~ {}  \n" +
                     "> **共计:{}**  \n";
 
-    protected RetryErrorMoreThresholdAlarmSchedule(AccessTemplate accessTemplate,
-                                                   NotifyRecipientDao notifyRecipientDao) {
-        super(accessTemplate, notifyRecipientDao);
+    private final RetryDao retryDao;
+
+    protected RetryErrorMoreThresholdAlarmSchedule(RetrySceneConfigDao retrySceneConfigDao,
+                                                   NotifyConfigDao notifyConfigDao,
+                                                   NotifyRecipientDao notifyRecipientDao,
+                                                   RetryDao retryDao) {
+        super(retrySceneConfigDao, notifyConfigDao, notifyRecipientDao);
+        this.retryDao = retryDao;
     }
 
     @Override
@@ -63,7 +70,7 @@ public class RetryErrorMoreThresholdAlarmSchedule extends AbstractRetryTaskAlarm
         Instant now = Instant.now();
 
         // x分钟内、x组、x场景进入任务到达最大重试次数的数据量
-        long count = accessTemplate.getRetryAccess()
+        long count = retryDao
                 .count(new LambdaQueryWrapper<Retry>()
                         .eq(Retry::getNamespaceId, partitionTask.getNamespaceId())
                         .between(Retry::getUpdatedDate, now.minus(30, ChronoUnit.MINUTES), now)

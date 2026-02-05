@@ -3,6 +3,7 @@ package com.old.silence.job.server.common.cache;
 import cn.hutool.core.util.StrUtil;
 
 import org.springframework.stereotype.Component;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.old.silence.job.common.context.SilenceSpringContext;
@@ -12,7 +13,8 @@ import com.old.silence.job.server.common.config.SystemProperties;
 import com.old.silence.job.server.common.register.ServerRegister;
 import com.old.silence.job.server.common.triple.Pair;
 import com.old.silence.job.server.domain.model.GroupConfig;
-import com.old.silence.job.server.domain.service.AccessTemplate;
+import com.old.silence.job.server.infrastructure.persistence.dao.GroupConfigDao;
+
 
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
@@ -34,8 +36,12 @@ public class CacheToken implements Lifecycle {
         String token = CACHE.getIfPresent(Pair.of(groupName, namespaceId));
         if (StrUtil.isBlank(token)) {
             // 从DB获取数据
-            AccessTemplate template = SilenceSpringContext.getBean(AccessTemplate.class);
-            GroupConfig config = template.getGroupConfigAccess().getGroupConfigByGroupName(groupName, namespaceId);
+            GroupConfigDao groupConfigDao = SilenceSpringContext.getBean(GroupConfigDao.class);
+            GroupConfig config = groupConfigDao.selectOne(
+                    new LambdaQueryWrapper<GroupConfig>()
+                            .eq(GroupConfig::getGroupName, groupName)
+                            .eq(GroupConfig::getNamespaceId, namespaceId)
+            );
             if (Objects.isNull(config)) {
                 return StrUtil.EMPTY;
             }
