@@ -36,7 +36,7 @@
         <!-- 依赖 server-support 模块 -->
         <dependency>
             <groupId>com.old.silence</groupId>
-            <artifactId>silence-job-server-support</artifactId>
+            <artifactId>silence-job-server-common</artifactId>
         </dependency>
 
         <!-- Caffeine 缓存 -->

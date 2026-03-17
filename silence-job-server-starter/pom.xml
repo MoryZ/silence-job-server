@@ -47,11 +47,7 @@
             <artifactId>silence-job-server-retry-task</artifactId>
             <version>${project.version}</version>
         </dependency>
-        <dependency>
-            <groupId>com.old.silence</groupId>
-            <artifactId>silence-job-server-rpc</artifactId>
-            <version>${project.version}</version>
-        </dependency>
+
         
         <!-- Platform Config -->
         <dependency>

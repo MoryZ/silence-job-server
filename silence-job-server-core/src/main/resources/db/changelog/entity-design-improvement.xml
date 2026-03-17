@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                      http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="entity-design-improvement-001" author="system">
+        <comment>Create Job-NotifyConfig relation table</comment>
+
+        <createTable tableName="sj_job_notify_config_relation">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="job_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="notify_config_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="tenant_id" type="VARCHAR(50)"/>
+            <column name="created_by" type="VARCHAR(100)"/>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_by" type="VARCHAR(100)"/>
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP"/>
+            <column name="is_deleted" type="BOOLEAN" defaultValue="FALSE"/>
+        </createTable>
+
+        <addUniqueConstraint tableName="sj_job_notify_config_relation"
+                           columnNames="job_id, notify_config_id"
+                           constraintName="uk_job_notify"/>
+        <createIndex tableName="sj_job_notify_config_relation" indexName="idx_job_id">
+            <column name="job_id"/>
+        </createIndex>
+        <createIndex tableName="sj_job_notify_config_relation" indexName="idx_job_notify_config_id">
+            <column name="notify_config_id"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="entity-design-improvement-002" author="system">
+        <comment>Create Workflow-NotifyConfig relation table</comment>
+
+        <createTable tableName="sj_workflow_notify_config_relation">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="workflow_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="notify_config_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="tenant_id" type="VARCHAR(50)"/>
+            <column name="created_by" type="VARCHAR(100)"/>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_by" type="VARCHAR(100)"/>
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP"/>
+            <column name="is_deleted" type="BOOLEAN" defaultValue="FALSE"/>
+        </createTable>
+
+        <addUniqueConstraint tableName="sj_workflow_notify_config_relation"
+                           columnNames="workflow_id, notify_config_id"
+                           constraintName="uk_workflow_notify"/>
+        <createIndex tableName="sj_workflow_notify_config_relation" indexName="idx_workflow_id">
+            <column name="workflow_id"/>
+        </createIndex>
+        <createIndex tableName="sj_workflow_notify_config_relation" indexName="idx_workflow_notify_config_id">
+            <column name="notify_config_id"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="entity-design-improvement-003" author="system">
+        <comment>Create RetrySceneConfig-NotifyConfig relation table</comment>
+
+        <createTable tableName="sj_retry_scene_config_notify_config_relation">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="retry_scene_config_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="notify_config_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="tenant_id" type="VARCHAR(50)"/>
+            <column name="created_by" type="VARCHAR(100)"/>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_by" type="VARCHAR(100)"/>
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP"/>
+            <column name="is_deleted" type="BOOLEAN" defaultValue="FALSE"/>
+        </createTable>
+
+        <addUniqueConstraint tableName="sj_retry_scene_config_notify_config_relation"
+                           columnNames="retry_scene_config_id, notify_config_id"
+                           constraintName="uk_retry_scene_notify"/>
+        <createIndex tableName="sj_retry_scene_config_notify_config_relation" indexName="idx_retry_scene_config_id">
+            <column name="retry_scene_config_id"/>
+        </createIndex>
+        <createIndex tableName="sj_retry_scene_config_notify_config_relation" indexName="idx_retry_scene_notify_config_id">
+            <column name="notify_config_id"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="entity-design-improvement-004" author="system">
+        <comment>Create NotifyConfig-Recipient relation table</comment>
+
+        <createTable tableName="sj_notify_config_recipient_relation">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="notify_config_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="recipient_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="tenant_id" type="VARCHAR(50)"/>
+            <column name="created_by" type="VARCHAR(100)"/>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_by" type="VARCHAR(100)"/>
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP"/>
+            <column name="is_deleted" type="BOOLEAN" defaultValue="FALSE"/>
+        </createTable>
+
+        <addUniqueConstraint tableName="sj_notify_config_recipient_relation"
+                           columnNames="notify_config_id, recipient_id"
+                           constraintName="uk_notify_recipient"/>
+        <createIndex tableName="sj_notify_config_recipient_relation" indexName="idx_notify_config_id">
+            <column name="notify_config_id"/>
+        </createIndex>
+        <createIndex tableName="sj_notify_config_recipient_relation" indexName="idx_recipient_id">
+            <column name="recipient_id"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog></content>
+<parameter name="filePath">/Users/moryzang/IdeaProjects/silence-job-server/silence-job-server-core/src/main/resources/db/changelog/entity-design-improvement.xml

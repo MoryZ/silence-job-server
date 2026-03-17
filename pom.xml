@@ -30,9 +30,6 @@
         <module>silence-job-server-core</module>
         <module>silence-job-server-job-task</module>
         <module>silence-job-server-retry-task</module>
-        <module>silence-job-server-rpc</module>
-        <module>silence-job-server-scheduler</module>
-        <module>silence-job-server-support</module>
         <module>silence-job-server-task-common</module>
     </modules>
 
@@ -95,21 +92,6 @@
             <dependency>
                 <groupId>com.old.silence</groupId>
                 <artifactId>silence-job-server-job-task</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.old.silence</groupId>
-                <artifactId>silence-job-server-support</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.old.silence</groupId>
-                <artifactId>silence-job-server-rpc</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.old.silence</groupId>
-                <artifactId>silence-job-server-scheduler</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>

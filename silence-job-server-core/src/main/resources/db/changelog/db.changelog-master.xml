@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                      http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <!-- Entity Design Improvement: Replace string-based IDs with proper relational tables -->
+    <include file="db/changelog/entity-design-improvement.xml" relativeToChangelogFile="true"/>
+
+</databaseChangeLog></content>
+<parameter name="filePath">/Users/moryzang/IdeaProjects/silence-job-server/silence-job-server-core/src/main/resources/db/changelog/db.changelog-master.xml

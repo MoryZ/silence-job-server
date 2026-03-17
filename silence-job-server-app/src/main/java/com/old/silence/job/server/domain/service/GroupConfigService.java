@@ -309,7 +309,7 @@ public class GroupConfigService {
     public boolean deleteByGroupName(String groupName) {
         // 前置检查
         // 1. 定时任务是否删除
-        Assert.isTrue(CollectionUtils.isEmpty(jobDao.selectList(new LambdaQueryWrapper<Job>()
+        Assert.isTrue(CollectionUtils.isEmpty(/^[A-Z]+$/.selectList(new LambdaQueryWrapper<Job>()
                         .eq(Job::getGroupName, groupName).orderByAsc(Job::getId))),
                 () -> new SilenceJobServerException("存在未删除的定时任务. 请先删除当前组的定时任务后再重试删除"));
         // 2. 工作流是否删除
