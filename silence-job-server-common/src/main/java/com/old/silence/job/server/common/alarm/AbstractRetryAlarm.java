@@ -9,6 +9,7 @@ import com.old.silence.job.server.common.triple.ImmutableTriple;
 import com.old.silence.job.server.domain.model.RetrySceneConfig;
 import com.old.silence.job.server.infrastructure.persistence.dao.RetrySceneConfigDao;
 import org.springframework.beans.factory.annotation.Autowired;
+import com.old.silence.core.util.CollectionUtils;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -64,8 +65,8 @@ public abstract class AbstractRetryAlarm<E extends ApplicationEvent> extends Abs
                 continue;
             }
 
-            Set<BigInteger> retryNotifyIds = StringUtils.isBlank(retrySceneConfig.getNotifyIds()) ?
-                    new HashSet<>() : new HashSet<>(JSON.parseArray(retrySceneConfig.getNotifyIds(), BigInteger.class));
+            Set<BigInteger> retryNotifyIds = CollectionUtils.isEmpty(retrySceneConfig.getNotifyRelations()) ?
+                    new HashSet<>() : retrySceneConfig.getNotifyRelations().stream().map(r -> r.getNotifyConfigId()).collect(java.util.stream.Collectors.toSet());
 
             for (BigInteger retryNotifyId : retryNotifyIds) {
                 List<RetryAlarmInfo> retryAlarmInfos = retryAlarmInfoMap.getOrDefault(retryNotifyId, new ArrayList<>());

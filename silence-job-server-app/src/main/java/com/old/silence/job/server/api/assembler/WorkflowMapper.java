@@ -1,7 +1,5 @@
 package com.old.silence.job.server.api.assembler;
 
-import cn.hutool.core.util.StrUtil;
-
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.springframework.core.convert.converter.Converter;
@@ -11,6 +9,7 @@ import com.old.silence.core.util.CollectionUtils;
 import com.old.silence.job.common.enums.WorkflowNodeType;
 import com.old.silence.job.server.common.util.DateUtils;
 import com.old.silence.job.server.domain.model.Workflow;
+import com.old.silence.job.server.domain.model.WorkflowNotifyConfigRelation;
 import com.old.silence.job.server.domain.model.WorkflowNode;
 import com.old.silence.job.server.domain.model.WorkflowTaskBatch;
 import com.old.silence.job.server.dto.CallbackConfig;
@@ -24,9 +23,10 @@ import com.old.silence.job.server.vo.WorkflowResponseVO;
 
 import java.math.BigInteger;
 import java.time.Instant;
-import java.util.HashSet;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 
 @Mapper(componentModel = "spring", uses = MapStructSpringConfig.class)
@@ -34,12 +34,11 @@ public interface WorkflowMapper extends Converter<WorkflowCommand, Workflow> {
 
 
     @Override
-    @Mapping(target = "notifyIds", expression = "java(toNotifyIdsStr(workflowCommand.getNotifyIds()))")
     Workflow convert(WorkflowCommand workflowCommand);
 
     WorkflowNode convert(WorkflowCommand.NodeInfo nodeInfo);
 
-    @Mapping(target = "notifyIds", expression = "java(toNotifyIds(workflow.getNotifyIds()))")
+    @Mapping(target = "notifyIds", expression = "java(toNotifyIds(workflow.getNotifyRelations()))")
     WorkflowDetailResponseVO convert(Workflow workflow);
 
     @Mapping(target = "decision", expression = "java(parseDecisionConfig(workflowNode))")
@@ -49,7 +48,7 @@ public interface WorkflowMapper extends Converter<WorkflowCommand, Workflow> {
 
 
     @Mapping(target = "nextTriggerAt", expression = "java(toLocalDateTime(workflow.getNextTriggerAt()))")
-    @Mapping(target = "notifyIds", expression = "java(toNotifyIds(workflow.getNotifyIds()))")
+    @Mapping(target = "notifyIds", expression = "java(toNotifyIds(workflow.getNotifyRelations()))")
     WorkflowResponseVO convertToWorkflow(Workflow workflow);
 
     @Mapping(source = "workflowTaskBatch.groupName", target = "groupName")
@@ -95,20 +94,14 @@ public interface WorkflowMapper extends Converter<WorkflowCommand, Workflow> {
         return null;
     }
 
-    default Set<BigInteger> toNotifyIds(String notifyIds) {
-        if (StrUtil.isBlank(notifyIds)) {
-            return new HashSet<>();
+    default Set<BigInteger> toNotifyIds(List<WorkflowNotifyConfigRelation> notifyRelations) {
+        if (CollectionUtils.isEmpty(notifyRelations)) {
+            return Set.of();
         }
 
-        return new HashSet<>(JSON.parseArray(notifyIds, BigInteger.class));
-    }
-
-    default String toNotifyIdsStr(Set<BigInteger> notifyIds) {
-        if (CollectionUtils.isEmpty(notifyIds)) {
-            return StrUtil.EMPTY;
-        }
-
-        return JSON.toJSONString(notifyIds);
+        return notifyRelations.stream()
+                .map(WorkflowNotifyConfigRelation::getNotifyConfigId)
+                .collect(Collectors.toSet());
     }
 
 }

@@ -29,7 +29,7 @@ public interface JobResponseVOConverter {
     List<JobResponseVO> convertList(List<Job> jobs);
 
     @Mapping(target = "nextTriggerAt", expression = "java(toLocalDateTime(job.getNextTriggerAt()))")
-    @Mapping(target = "notifyIds", expression = "java(toJobNotifyIds(job.getNotifyIds()))")
+    @Mapping(target = "notifyIds", expression = "java(toJobNotifyIds(job.getNotifyRelations()))")
     JobResponseVO convert(Job job);
 
     default Instant toLocalDateTime(Long nextTriggerAt) {
@@ -40,11 +40,11 @@ public interface JobResponseVOConverter {
         return DateUtils.toLocalDateTime(nextTriggerAt);
     }
 
-    default Set<BigInteger> toJobNotifyIds(String notifyIds) {
-        if (StrUtil.isBlank(notifyIds)) {
+    default Set<BigInteger> toJobNotifyIds(java.util.List<com.old.silence.job.server.domain.model.JobNotifyConfigRelation> notifyRelations) {
+        if (com.old.silence.core.util.CollectionUtils.isEmpty(notifyRelations)) {
             return new HashSet<>();
         }
 
-        return new HashSet<>(JSON.parseArray(notifyIds, BigInteger.class));
+        return notifyRelations.stream().map(r -> r.getNotifyConfigId()).collect(java.util.stream.Collectors.toSet());
     }
 }

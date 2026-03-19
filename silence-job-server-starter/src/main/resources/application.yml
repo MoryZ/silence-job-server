@@ -18,7 +18,7 @@ spring:
       maximum-pool-size: 100
       auto-commit: true
       idle-timeout: 30000
-      pool-name: silence_job
+      pool-name: silence_job_center_pool
       max-lifetime: 1800000
   cloud:
     nacos:

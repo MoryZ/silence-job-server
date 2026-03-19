@@ -1,11 +1,11 @@
 package com.old.silence.job.server.retry.task.support;
 
-import cn.hutool.core.util.StrUtil;
+import com.old.silence.core.util.CollectionUtils;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.factory.Mappers;
-import com.alibaba.fastjson2.JSON;
 import com.old.silence.job.common.client.dto.request.DispatchCallbackResultRequest;
+import java.util.stream.Collectors;
 import com.old.silence.job.common.client.dto.request.DispatchRetryRequest;
 import com.old.silence.job.common.client.dto.request.DispatchRetryResultRequest;
 import com.old.silence.job.common.client.dto.request.RetryCallbackRequest;
@@ -18,9 +18,11 @@ import com.old.silence.job.server.common.dto.RetryAlarmInfo;
 import com.old.silence.job.server.common.dto.RetryLogMetaDTO;
 import com.old.silence.job.server.common.util.DateUtils;
 import com.old.silence.job.server.domain.model.NotifyConfig;
+import com.old.silence.job.server.domain.model.NotifyConfigRecipientRelation;
 import com.old.silence.job.server.domain.model.Retry;
 import com.old.silence.job.server.domain.model.RetryDeadLetter;
 import com.old.silence.job.server.domain.model.RetrySceneConfig;
+import com.old.silence.job.server.domain.model.RetrySceneConfigNotifyConfigRelation;
 import com.old.silence.job.server.domain.model.RetryTask;
 import com.old.silence.job.server.domain.model.RetryTaskLogMessage;
 import com.old.silence.job.server.retry.task.dto.*;
@@ -63,26 +65,30 @@ public interface RetryTaskConverter {
 
     List<RetrySceneConfigPartitionTask> toRetrySceneConfigPartitionTask(List<RetrySceneConfig> retrySceneConfigs);
 
-    @Mapping(target = "notifyIds", expression = "java(toNotifyIds(retrySceneConfig.getNotifyIds()))")
+    @Mapping(target = "notifyIds", expression = "java(toNotifyIds(retrySceneConfig.getNotifyRelations()))")
     RetrySceneConfigPartitionTask toRetrySceneConfigPartitionTask(RetrySceneConfig retrySceneConfig);
 
-    @Mapping(target = "recipientIds", expression = "java(toNotifyRecipientIds(notifyConfig.getRecipientIds()))")
+    @Mapping(target = "recipientIds", expression = "java(toNotifyRecipientIds(notifyConfig.getRecipientRelations()))")
     NotifyConfigDTO toNotifyConfigDTO(NotifyConfig notifyConfig);
 
-    default Set<BigInteger> toNotifyIds(String notifyIdsStr) {
-        if (StrUtil.isBlank(notifyIdsStr)) {
+    default Set<BigInteger> toNotifyIds(List<RetrySceneConfigNotifyConfigRelation> notifyRelations) {
+        if (CollectionUtils.isEmpty(notifyRelations)) {
             return Set.of();
         }
 
-        return new HashSet<>(JSON.parseArray(notifyIdsStr, BigInteger.class));
+        return notifyRelations.stream()
+            .map(RetrySceneConfigNotifyConfigRelation::getNotifyConfigId)
+            .collect(Collectors.toSet());
     }
 
-    default Set<BigInteger> toNotifyRecipientIds(String notifyRecipientIdsStr) {
-        if (StrUtil.isBlank(notifyRecipientIdsStr)) {
+    default Set<BigInteger> toNotifyRecipientIds(List<NotifyConfigRecipientRelation> recipientRelations) {
+        if (CollectionUtils.isEmpty(recipientRelations)) {
             return Set.of();
         }
 
-        return new HashSet<>(JSON.parseArray(notifyRecipientIdsStr, BigInteger.class));
+        return recipientRelations.stream()
+            .map(NotifyConfigRecipientRelation::getRecipientId)
+            .collect(Collectors.toSet());
     }
 
     RetryTaskLogMessage toRetryTaskLogMessage(RetryLogTaskDTO retryLogTaskDTO);

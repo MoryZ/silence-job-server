@@ -18,12 +18,10 @@
             <column name="notify_config_id" type="BIGINT">
                 <constraints nullable="false"/>
             </column>
-            <column name="tenant_id" type="VARCHAR(50)"/>
             <column name="created_by" type="VARCHAR(100)"/>
             <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP"/>
             <column name="updated_by" type="VARCHAR(100)"/>
             <column name="updated_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP"/>
-            <column name="is_deleted" type="BOOLEAN" defaultValue="FALSE"/>
         </createTable>
 
         <addUniqueConstraint tableName="sj_job_notify_config_relation"
@@ -50,12 +48,10 @@
             <column name="notify_config_id" type="BIGINT">
                 <constraints nullable="false"/>
             </column>
-            <column name="tenant_id" type="VARCHAR(50)"/>
             <column name="created_by" type="VARCHAR(100)"/>
             <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP"/>
             <column name="updated_by" type="VARCHAR(100)"/>
             <column name="updated_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP"/>
-            <column name="is_deleted" type="BOOLEAN" defaultValue="FALSE"/>
         </createTable>
 
         <addUniqueConstraint tableName="sj_workflow_notify_config_relation"
@@ -82,12 +78,10 @@
             <column name="notify_config_id" type="BIGINT">
                 <constraints nullable="false"/>
             </column>
-            <column name="tenant_id" type="VARCHAR(50)"/>
             <column name="created_by" type="VARCHAR(100)"/>
             <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP"/>
             <column name="updated_by" type="VARCHAR(100)"/>
             <column name="updated_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP"/>
-            <column name="is_deleted" type="BOOLEAN" defaultValue="FALSE"/>
         </createTable>
 
         <addUniqueConstraint tableName="sj_retry_scene_config_notify_config_relation"
@@ -114,12 +108,10 @@
             <column name="recipient_id" type="BIGINT">
                 <constraints nullable="false"/>
             </column>
-            <column name="tenant_id" type="VARCHAR(50)"/>
             <column name="created_by" type="VARCHAR(100)"/>
             <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP"/>
             <column name="updated_by" type="VARCHAR(100)"/>
             <column name="updated_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP"/>
-            <column name="is_deleted" type="BOOLEAN" defaultValue="FALSE"/>
         </createTable>
 
         <addUniqueConstraint tableName="sj_notify_config_recipient_relation"

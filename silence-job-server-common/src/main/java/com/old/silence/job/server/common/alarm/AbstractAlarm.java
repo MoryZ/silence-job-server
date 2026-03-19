@@ -106,8 +106,11 @@ public abstract class AbstractAlarm<E extends ApplicationEvent, A extends AlarmI
             return Maps.newHashMap();
         }
 
-        Set<BigInteger> recipientIds = notifyConfigs.stream()
-                .flatMap(config -> JSON.parseArray(config.getRecipientIds(), BigInteger.class).stream())
+            Set<BigInteger> recipientIds = notifyConfigs.stream()
+                .flatMap(config -> CollectionUtils.isEmpty(config.getRecipientRelations()) ? 
+                    java.util.stream.Stream.empty() : 
+                    config.getRecipientRelations().stream())
+                .map(com.old.silence.job.server.domain.model.NotifyConfigRecipientRelation::getRecipientId)
                 .collect(Collectors.toSet());
 
         List<NotifyRecipient> notifyRecipients = notifyRecipientDao.selectBatchIds(recipientIds);

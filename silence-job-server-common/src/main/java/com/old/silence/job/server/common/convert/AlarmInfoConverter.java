@@ -1,6 +1,7 @@
 package com.old.silence.job.server.common.convert;
 
 import cn.hutool.core.util.StrUtil;
+import com.old.silence.core.util.CollectionUtils;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.factory.Mappers;
@@ -9,6 +10,8 @@ import com.old.silence.job.server.common.dto.JobAlarmInfo;
 import com.old.silence.job.server.common.dto.NotifyConfigInfo;
 import com.old.silence.job.server.common.dto.WorkflowAlarmInfo;
 import com.old.silence.job.server.domain.model.NotifyConfig;
+import com.old.silence.job.server.domain.model.NotifyConfigRecipientRelation;
+import java.util.stream.Collectors;
 import com.old.silence.job.server.vo.JobBatchResponseDO;
 import com.old.silence.job.server.vo.WorkflowBatchResponseDO;
 
@@ -25,7 +28,7 @@ public interface AlarmInfoConverter {
 
     List<NotifyConfigInfo> retryToNotifyConfigInfos(List<NotifyConfig> notifyConfigs);
 
-    @Mapping(target = "recipientIds", expression = "java(toNotifyRecipientIds(notifyConfig.getRecipientIds()))")
+    @Mapping(target = "recipientIds", expression = "java(toNotifyRecipientIds(notifyConfig.getRecipientRelations()))")
     NotifyConfigInfo retryToNotifyConfigInfos(NotifyConfig notifyConfig);
 
 
@@ -34,11 +37,13 @@ public interface AlarmInfoConverter {
     WorkflowAlarmInfo toWorkflowAlarmInfo(WorkflowBatchResponseDO workflowBatchResponseDO);
 
 
-    default Set<BigInteger> toNotifyRecipientIds(String notifyRecipientIdsStr) {
-        if (StrUtil.isBlank(notifyRecipientIdsStr)) {
+    default Set<BigInteger> toNotifyRecipientIds(List<NotifyConfigRecipientRelation> recipientRelations) {
+        if (CollectionUtils.isEmpty(recipientRelations)) {
             return Set.of();
         }
 
-        return new HashSet<>(JSON.parseArray(notifyRecipientIdsStr, BigInteger.class));
+        return recipientRelations.stream()
+            .map(NotifyConfigRecipientRelation::getRecipientId)
+            .collect(Collectors.toSet());
     }
 }

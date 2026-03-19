@@ -1,6 +1,5 @@
 package com.old.silence.job.server.api;
 
-import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
