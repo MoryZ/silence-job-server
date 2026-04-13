@@ -21,6 +21,7 @@
         <maven.compiler.target>21</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <silence-job-common.version>1.8.0-SNAPSHOT</silence-job-common.version>
+        <protobuf.version>3.25.1</protobuf.version>
     </properties>
 
     <modules>
@@ -170,6 +171,16 @@
                 <groupId>io.grpc</groupId>
                 <artifactId>grpc-util</artifactId>
                 <version>1.58.0</version>
+            </dependency>
+            <dependency>
+                <groupId>com.google.protobuf</groupId>
+                <artifactId>protobuf-java</artifactId>
+                <version>${protobuf.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.google.protobuf</groupId>
+                <artifactId>protobuf-javalite</artifactId>
+                <version>${protobuf.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.googlecode.aviator</groupId>
