@@ -1,16 +1,14 @@
 server:
   port: 8098
-  servlet:
-    context-path:
 
 spring:
   application:
     name: job-service
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3306/silence-platform?allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false
-    username: root
-    password: silenceopr@2026
+    url: jdbc:mysql://obmt7k9agbmkkakg-mi.aliyun-cn-hangzhou-internet.oceanbase.cloud:3306/silence-job?allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false
+    username: silenceopr
+    password: 88&B3z_*=2Gma(q1
     type: com.zaxxer.hikari.HikariDataSource
     hikari:
       connection-timeout: 30000
