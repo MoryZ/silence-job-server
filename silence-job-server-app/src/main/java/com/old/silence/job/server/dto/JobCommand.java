@@ -12,8 +12,6 @@ import jakarta.validation.constraints.Pattern;
 import java.math.BigInteger;
 import java.util.Set;
 
-
-
 public class JobCommand {
 
     /**

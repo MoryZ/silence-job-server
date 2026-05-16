@@ -163,8 +163,8 @@ public class WorkflowService  {
                 workflow.getVersion());
         log.info("图构建完成. graph:[{}]", graph);
 
+        workflow = workflowDao.selectById(workflow.getId());
         // 保存图信息
-        workflow.setVersion(null);
         workflow.setFlowInfo(JSON.toJSONString(GraphUtils.serializeGraphToJson(graph)));
         Assert.isTrue(1 == workflowDao.updateById(workflow), () -> new SilenceJobServerException("保存工作流图失败"));
         return true;
@@ -396,7 +396,7 @@ public class WorkflowService  {
         List<Job> jobs = jobDao.selectList(new LambdaQueryWrapper<Job>()
                 .in(Job::getId, new HashSet<>(jobIds)));
 
-        Map<BigInteger, Job> jobMap = StreamUtils.toIdentityMap(jobs, Job::getId);
+        Map<BigInteger, Job> jobMap = CollectionUtils.transformToMap(jobs, Job::getId);
 
         List<WorkflowDetailResponseVO.NodeInfo> nodeInfos = CollectionUtils.transformToList(workflowNodes, workflowMapper::convert);
 

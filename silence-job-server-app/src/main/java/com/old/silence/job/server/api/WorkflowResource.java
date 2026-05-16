@@ -24,7 +24,6 @@ import com.old.silence.job.server.vo.WorkflowResponseVO;
 
 
 import jakarta.validation.constraints.NotEmpty;
-import java.io.IOException;
 import java.math.BigInteger;
 import java.util.List;
 import java.util.Set;
@@ -80,7 +79,7 @@ public class WorkflowResource {
 
 
     @PostMapping(value = "/workflows/import", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public void importScene(@RequestPart("file") MultipartFile file) throws Exception {
+    public void importScene(@RequestPart MultipartFile file) throws Exception {
         // 写入数据
         var workflowCommands = ImportUtils.parseList(file, WorkflowCommand.class);
         var workflows = CollectionUtils.transformToList(workflowCommands, workflowMapper::convert);
