@@ -41,6 +41,7 @@ public interface JobTaskConverter {
     JobTaskPrepareDTO toJobTaskPrepare(Job job);
 
     @Mapping(source = "job.id", target = "jobId")
+    @Mapping(source = "job.namespaceId", target = "namespaceId")
     @Mapping(source = "job.groupName", target = "groupName")
     JobTaskPrepareDTO toJobTaskPrepare(Job job, WorkflowExecutorContext context);
 

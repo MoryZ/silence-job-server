@@ -65,7 +65,7 @@ public class JobTaskWorkflowExecutor extends AbstractWorkflowExecutor {
     @Override
     protected void doExecute(WorkflowExecutorContext context) {
 
-        if (WORKFLOW_SUCCESSOR_SKIP_EXECUTION.contains(context.getParentOperationReason())) {
+        if (context.getParentOperationReason() == null || WORKFLOW_SUCCESSOR_SKIP_EXECUTION.contains(context.getParentOperationReason())) {
             // 针对无需处理的批次直接新增一个记录
             context.setTaskBatchStatus(JobTaskBatchStatus.CANCEL);
             context.setOperationReason(JobOperationReason.WORKFLOW_NODE_NO_REQUIRED);
@@ -87,7 +87,7 @@ public class JobTaskWorkflowExecutor extends AbstractWorkflowExecutor {
 
     }
 
-    private void invokeCancelJobTask(final WorkflowExecutorContext context, String cancelReason) {
+    private void invokeCancelJobTask(WorkflowExecutorContext context, String cancelReason) {
 
         JobTaskBatch jobTaskBatch = generateJobTaskBatch(context);
         JobTask jobTask = generateJobTask(context, jobTaskBatch);

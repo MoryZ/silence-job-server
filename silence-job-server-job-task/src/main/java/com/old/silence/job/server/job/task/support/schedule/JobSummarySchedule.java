@@ -3,20 +3,16 @@ package com.old.silence.job.server.job.task.support.schedule;
 import org.springframework.stereotype.Component;
 import com.alibaba.fastjson2.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.google.common.collect.Lists;
 import com.old.silence.core.util.CollectionUtils;
 import com.old.silence.job.common.enums.JobTaskBatchStatus;
 import com.old.silence.job.common.enums.SystemTaskType;
-import com.old.silence.job.common.util.StreamUtils;
 import com.old.silence.job.log.SilenceJobLog;
 import com.old.silence.job.server.common.Lifecycle;
 import com.old.silence.job.server.common.config.SystemProperties;
 import com.old.silence.job.server.common.dto.JobTaskBatchReason;
 import com.old.silence.job.server.common.schedule.AbstractSchedule;
-import com.old.silence.job.server.common.triple.Pair;
 import com.old.silence.job.server.domain.model.JobSummary;
 import com.old.silence.job.server.domain.model.JobTaskBatch;
-import com.old.silence.job.server.infrastructure.persistence.dao.JobDao;
 import com.old.silence.job.server.infrastructure.persistence.dao.JobSummaryDao;
 import com.old.silence.job.server.infrastructure.persistence.dao.JobTaskBatchDao;
 import com.old.silence.job.server.vo.JobBatchSummaryResponseDO;
@@ -28,7 +24,6 @@ import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -38,14 +33,12 @@ import java.util.stream.Collectors;
 public class JobSummarySchedule extends AbstractSchedule implements Lifecycle {
     private final JobTaskBatchDao jobTaskBatchDao;
     private final JobSummaryDao jobSummaryDao;
-    private final JobDao jobDao;
     private final SystemProperties systemProperties;
 
     public JobSummarySchedule(JobTaskBatchDao jobTaskBatchDao, JobSummaryDao jobSummaryDao,
-                              JobDao jobDao, SystemProperties systemProperties) {
+                              SystemProperties systemProperties) {
         this.jobTaskBatchDao = jobTaskBatchDao;
         this.jobSummaryDao = jobSummaryDao;
-        this.jobDao = jobDao;
         this.systemProperties = systemProperties;
     }
 
@@ -72,9 +65,9 @@ public class JobSummarySchedule extends AbstractSchedule implements Lifecycle {
 
                 // 定时按日实时查询统计数据（00:00:00 - 23:59:59）
                 var beginTime = Instant.now().atZone(zoneId)
-                        .withHour(0).withMinute(0).withSecond(0).withNano(0).toInstant();
+                        .withHour(0).withMinute(0).withSecond(0).toInstant();
                 var endTime = Instant.now().atZone(zoneId)
-                        .withHour(23).withMinute(59).withSecond(59).withNano(999999999).toInstant();
+                        .withHour(23).withMinute(59).withSecond(59).toInstant();
                 LambdaQueryWrapper<JobTaskBatch> wrapper = new LambdaQueryWrapper<JobTaskBatch>()
                         .eq(JobTaskBatch::getSystemTaskType, SystemTaskType.JOB)
                         .between(JobTaskBatch::getCreatedDate, beginTime, endTime)
@@ -85,41 +78,12 @@ public class JobSummarySchedule extends AbstractSchedule implements Lifecycle {
                     continue;
                 }
 
-                // insertOrUpdate
+                // upsert，避免唯一索引冲突
                 List<JobSummary> jobSummaryList = jobSummaryList(beginTime, summaryResponseDOList);
-
-                List<JobSummary> jobSummaries = jobSummaryDao.selectList(new LambdaQueryWrapper<JobSummary>()
-                        .eq(JobSummary::getTriggerAt, beginTime)
-                        .eq(JobSummary::getSystemTaskType, SystemTaskType.JOB)
-                        .in(JobSummary::getBusinessId, StreamUtils.toSet(jobSummaryList, JobSummary::getBusinessId)));
-
-                Map<Pair<BigInteger, Instant>, JobSummary> summaryMap = StreamUtils.toIdentityMap(jobSummaries,
-                        jobSummary -> Pair.of(jobSummary.getBusinessId(), jobSummary.getTriggerAt()));
-
-                List<JobSummary> waitInserts = Lists.newArrayList();
-                List<JobSummary> waitUpdates = Lists.newArrayList();
-                for (final JobSummary jobSummary : jobSummaryList) {
-                    if (Objects.isNull(
-                            summaryMap.get(Pair.of(jobSummary.getBusinessId(), jobSummary.getTriggerAt())))) {
-                        waitInserts.add(jobSummary);
-                    } else {
-                        waitUpdates.add(jobSummary);
-                    }
-                }
-
-                int updateTotalJobSummary = 0;
-                if (CollectionUtils.isNotEmpty(waitUpdates)) {
-                    updateTotalJobSummary = jobSummaryDao.updateBatch(waitUpdates);
-                }
-
-                int insertTotalJobSummary = 0;
-                if (CollectionUtils.isNotEmpty(waitInserts)) {
-                    insertTotalJobSummary = jobSummaryDao.insertBatch(waitInserts);
-                }
-
+                boolean result = jobSummaryDao.upsertBatch(jobSummaryList) > 0;
                 SilenceJobLog.LOCAL.debug(
-                        "job summary dashboard success todayFrom:[{}] todayTo:[{}] updateTotalJobSummary:[{}] insertTotalJobSummary:[{}]",
-                        beginTime, endTime, updateTotalJobSummary, insertTotalJobSummary);
+                        "job summary dashboard upsert todayFrom:[{}] todayTo:[{}] result:[{}]",
+                        beginTime, endTime, result);
             }
         } catch (Exception e) {
             SilenceJobLog.LOCAL.error("job summary dashboard log error", e);

@@ -166,6 +166,7 @@ ENTRYPOINT ["java", "-jar", "app.jar"]
 ```
 
 #### docker-compose.yml
+
 ```yaml
 version: '3.8'
 
@@ -190,25 +191,25 @@ services:
       - "8848:8848"
 
   job-server:
-    build: .
+    build: ..
     ports:
       - "8098:8098"
     environment:
       # 数据库配置
       MYSQL_USERNAME: ${MYSQL_USERNAME:-root}
       MYSQL_PASSWORD: ${MYSQL_PASSWORD:-silenceopr@2026}
-      
+
       # Nacos 配置
       NACOS_USERNAME: ${NACOS_USERNAME:-nacos}
       NACOS_PASSWORD: ${NACOS_PASSWORD:-nacos}
-      
+
       # 邮件配置
       MAIL_USERNAME: ${MAIL_USERNAME:-13611988536@163.com}
       MAIL_PASSWORD: ${MAIL_PASSWORD:-PTsXDSWS8PqZarUA}
-      
+
       # Spring profiles
       SPRING_PROFILES_ACTIVE: prd
-      
+
     depends_on:
       - mysql
       - nacos

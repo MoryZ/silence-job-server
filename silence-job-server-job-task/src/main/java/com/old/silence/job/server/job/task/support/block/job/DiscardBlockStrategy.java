@@ -23,6 +23,7 @@ public class DiscardBlockStrategy extends AbstracJobBlockStrategy {
         JobTaskBatchGeneratorContext jobTaskBatchGeneratorContext = JobTaskConverter.INSTANCE.toJobTaskGeneratorContext(context);
         jobTaskBatchGeneratorContext.setTaskBatchStatus(JobTaskBatchStatus.CANCEL);
         jobTaskBatchGeneratorContext.setOperationReason(JobOperationReason.JOB_DISCARD);
+        jobTaskBatchGeneratorContext.setNamespaceId(context.getNamespaceId());
         jobTaskBatchGenerator.generateJobTaskBatch(jobTaskBatchGeneratorContext);
     }
 

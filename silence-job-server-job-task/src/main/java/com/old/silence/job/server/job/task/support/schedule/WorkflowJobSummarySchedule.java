@@ -67,58 +67,27 @@ public class WorkflowJobSummarySchedule extends AbstractSchedule implements Life
         var zoneId = ZoneId.systemDefault();
         try {
             for (int i = 0; i < systemProperties.getSummaryDay(); i++) {
-
                 // 定时按日实时查询统计数据（00:00:00 - 23:59:59）
                 var todayFrom = Instant.now().atZone(zoneId)
-                        .withHour(0).withMinute(0).withSecond(0).withNano(0).toInstant();
+                        .withHour(0).withMinute(0).withSecond(0).toInstant();
                 var todayTo = Instant.now().atZone(zoneId)
-                        .withHour(23).withMinute(59).withSecond(59).withNano(999999999).toInstant();
+                        .withHour(23).withMinute(59).withSecond(59).toInstant();
                 LambdaQueryWrapper<WorkflowTaskBatch> wrapper = new LambdaQueryWrapper<WorkflowTaskBatch>()
                         .between(WorkflowTaskBatch::getCreatedDate, todayFrom, todayTo)
                         .groupBy(WorkflowTaskBatch::getNamespaceId, WorkflowTaskBatch::getGroupName,
                                 WorkflowTaskBatch::getWorkflowId, WorkflowTaskBatch::getTaskBatchStatus,
                                 WorkflowTaskBatch::getOperationReason);
-                List<JobBatchSummaryResponseDO> summaryWorkflowResponseDOList = jobTaskBatchDao.selectWorkflowTaskBatchSummaryList(
-                        wrapper);
+                List<JobBatchSummaryResponseDO> summaryWorkflowResponseDOList = jobTaskBatchDao.selectWorkflowTaskBatchSummaryList(wrapper);
                 if (CollectionUtils.isEmpty(summaryWorkflowResponseDOList)) {
                     continue;
                 }
 
-                // insertOrUpdate
+                // upsert，避免唯一索引冲突
                 List<JobSummary> jobSummaryList = jobSummaryList(todayFrom, summaryWorkflowResponseDOList);
-
-                List<JobSummary> jobSummaries = jobSummaryDao.selectList(new LambdaQueryWrapper<JobSummary>()
-                        .eq(JobSummary::getTriggerAt, todayFrom)
-                        .eq(JobSummary::getSystemTaskType, SystemTaskType.WORKFLOW.getValue())
-                        .in(JobSummary::getBusinessId, StreamUtils.toSet(jobSummaryList, JobSummary::getBusinessId)));
-
-                Map<Pair<BigInteger, Instant>, JobSummary> summaryMap = StreamUtils.toIdentityMap(jobSummaries,
-                        jobSummary -> Pair.of(jobSummary.getBusinessId(), jobSummary.getTriggerAt()));
-
-                List<JobSummary> waitInserts = Lists.newArrayList();
-                List<JobSummary> waitUpdates = Lists.newArrayList();
-                for (final JobSummary jobSummary : jobSummaryList) {
-                    if (Objects.isNull(
-                            summaryMap.get(Pair.of(jobSummary.getBusinessId(), jobSummary.getTriggerAt())))) {
-                        waitInserts.add(jobSummary);
-                    } else {
-                        waitUpdates.add(jobSummary);
-                    }
-                }
-
-                int updateTotalJobSummary = 0;
-                if (CollectionUtils.isNotEmpty(waitUpdates)) {
-                    updateTotalJobSummary = jobSummaryDao.updateBatch(waitUpdates);
-                }
-
-                int insertTotalJobSummary = 0;
-                if (CollectionUtils.isNotEmpty(waitInserts)) {
-                    insertTotalJobSummary = jobSummaryDao.insertBatch(waitInserts);
-                }
-
+                boolean result = jobSummaryDao.upsertBatch(jobSummaryList) > 0;
                 SilenceJobLog.LOCAL.debug(
-                        "workflow job summary dashboard success todayFrom:[{}] todayTo:[{}] updateTotalJobSummary:[{}] insertTotalJobSummary:[{}]",
-                        todayFrom, todayTo, updateTotalJobSummary, insertTotalJobSummary);
+                        "workflow job summary dashboard upsert todayFrom:[{}] todayTo:[{}] result:[{}]",
+                        todayFrom, todayTo, result);
             }
         } catch (Exception e) {
             SilenceJobLog.LOCAL.error("workflow job summary dashboard log error", e);

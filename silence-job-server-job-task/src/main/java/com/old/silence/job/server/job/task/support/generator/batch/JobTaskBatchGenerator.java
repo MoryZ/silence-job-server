@@ -60,8 +60,7 @@ public class JobTaskBatchGenerator {
         JobTaskBatch jobTaskBatch = JobTaskConverter.INSTANCE.toJobTaskBatch(context);
         JobTaskExecutorScene jobTaskExecutorScene = context.getTaskExecutorScene();
         jobTaskBatch.setSystemTaskType(jobTaskExecutorScene.getSystemTaskType());
-        jobTaskBatch.setCreatedDate(Instant.now());
-
+        jobTaskBatch.setNamespaceId(context.getNamespaceId());
         // 无执行的节点
         if (Objects.isNull(context.getOperationReason()) && Objects.isNull(context.getTaskBatchStatus()) &&
                 CollectionUtils.isEmpty(CacheRegisterTable.getServerNodeSet(context.getGroupName(), context.getNamespaceId()))) {

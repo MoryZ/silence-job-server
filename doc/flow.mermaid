@@ -1,0 +1,55 @@
+sequenceDiagram
+    participant Scan as ScanJobTaskActor
+    participant Prepare as JobTaskPrepareActor
+    participant Batch as JobTaskBatchDao
+    participant WaitH as WaitJobPrepareHandler
+    participant RunH as RunningJobPrepareHandler
+    participant TermH as TerminalJobPrepareHandler
+    participant Gen as JobTaskBatchGenerator
+    participant Wheel as JobTimerWheel
+    participant Timer as JobTimerTask
+    participant Exec as JobExecutorActor
+    participant Client as RequestClientActor/Client
+    participant Callback as ClientCallbackHandler
+    participant Result as JobExecutorResultActor
+    participant BatchH as JobTaskBatchHandler
+
+    Scan->>Prepare: tell(JobTaskPrepareDTO)
+
+    Prepare->>Batch: 查询 jobId 下 NOT_COMPLETE 批次
+    alt 存在未完成批次
+        loop 遍历每个未完成批次
+            alt status = WAITING
+                Prepare->>WaitH: handle(prepare)
+                WaitH->>Wheel: 确保任务挂入时间轮
+            else status = RUNNING
+                Prepare->>RunH: handle(prepare)
+                RunH->>BatchH: 尝试批次收口 / 超时检查
+                alt 不是 onlyTimeoutCheck
+                    RunH->>Gen: 按阻塞策略决定是否生成新批次
+                end
+            end
+        end
+    else 没有未完成批次
+        Prepare->>TermH: 用“模拟终态”走终态处理
+        TermH->>Gen: generateJobTaskBatch()
+        Gen->>Wheel: 注册 JobTimerTask
+    end
+
+    Wheel->>Timer: 到触发时间
+    Timer->>Exec: tell(TaskExecuteDTO)
+
+    Exec->>BatchH: 更新批次为 RUNNING/CANCEL
+    Exec->>Exec: 生成 JobTask 实例
+    Exec->>Client: 下发到客户端执行
+
+    alt 客户端执行完成或失败回调
+        Client->>Callback: 执行结果
+        Callback->>Result: tell(JobExecutorResultDTO)
+        Result->>Result: 更新 JobTask 明细状态/结果
+        Result->>BatchH: handleResult(CompleteJobBatchDTO)
+        BatchH->>BatchH: 汇总批次是否完成、是否需要 reduce、是否开后继流程
+    else 下发客户端失败
+        Client->>Result: 直接投递 FAIL 结果
+        Result->>BatchH: 批次收口
+    end

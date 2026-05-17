@@ -159,7 +159,7 @@ FROM eclipse-temurin:17-jdk-alpine AS builder
 WORKDIR /build
 
 # 复制项目文件
-COPY . .
+COPY .. .
 
 # 构建应用
 RUN ./mvnw clean package -DskipTests

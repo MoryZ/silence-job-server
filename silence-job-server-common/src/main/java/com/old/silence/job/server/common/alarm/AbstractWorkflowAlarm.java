@@ -4,6 +4,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.ApplicationEvent;
 import com.alibaba.fastjson2.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.old.silence.core.util.CollectionUtils;
 import com.old.silence.job.common.util.StreamUtils;
 import com.old.silence.job.server.common.convert.AlarmInfoConverter;
 import com.old.silence.job.server.common.dto.WorkflowAlarmInfo;
@@ -39,8 +40,8 @@ public abstract class AbstractWorkflowAlarm<E extends ApplicationEvent> extends 
         // 查询数据库
         List<WorkflowBatchResponseDO> workflowBatchResponseDOList = workflowTaskBatchDao.selectWorkflowBatchList(
                 new QueryWrapper<WorkflowTaskBatch>()
-                        .in("batch.id", workflowAlarmInfoList.stream().map(WorkflowAlarmInfo::getId).collect(Collectors.toSet()))
-                        .eq("batch.deleted", 0));
+                        .in("batch.id", CollectionUtils.transformToSet(workflowAlarmInfoList, WorkflowAlarmInfo::getId))
+                        .eq("batch.is_deleted", false));
 
         for (WorkflowBatchResponseDO workflowBatchResponseDO : workflowBatchResponseDOList) {
             Set<BigInteger> workflowNotifyIds = StringUtils.isBlank(workflowBatchResponseDO.getNotifyIds()) ? new HashSet<>() : new HashSet<>(JSON.parseArray(workflowBatchResponseDO.getNotifyIds(), BigInteger.class));

@@ -1,6 +1,5 @@
 package com.old.silence.job.server.infrastructure.persistence.dao;
 
-import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import com.baomidou.mybatisplus.core.conditions.Wrapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
@@ -22,6 +21,11 @@ public interface JobSummaryDao extends BaseMapper<JobSummary> {
     int insertBatch(@Param("list") List<JobSummary> list);
 
     int updateBatch(@Param("list") List<JobSummary> list);
+
+    /**
+     * 批量upsert job summary（有则更新，无则插入）
+     */
+    int upsertBatch(@Param("list") List<JobSummary> list);
 
     IPage<DashboardRetryLineResponseDO.Task> selectJobTaskList(@Param("ew") Wrapper<Job> wrapper, Page<Object> page);
 

@@ -24,6 +24,36 @@
         </foreach>
     </insert>
 
+        <insert id="upsertBatch" parameterType="java.util.List">
+            INSERT INTO sj_job_summary (namespace_id, group_name, business_id, trigger_at, system_task_type, success_num,
+                                        fail_num, fail_reason, stop_num, stop_reason, cancel_num, cancel_reason)
+            VALUES
+            <foreach collection="list" item="item" separator=",">
+                (
+                    #{item.namespaceId},
+                    #{item.groupName},
+                    #{item.businessId},
+                    #{item.triggerAt},
+                    #{item.systemTaskType},
+                    #{item.successNum},
+                    #{item.failNum},
+                    #{item.failReason},
+                    #{item.stopNum},
+                    #{item.stopReason},
+                    #{item.cancelNum},
+                    #{item.cancelReason}
+                )
+            </foreach>
+            ON DUPLICATE KEY UPDATE
+                success_num = VALUES(success_num),
+                fail_num = VALUES(fail_num),
+                fail_reason = VALUES(fail_reason),
+                stop_num = VALUES(stop_num),
+                stop_reason = VALUES(stop_reason),
+                cancel_num = VALUES(cancel_num),
+                cancel_reason = VALUES(cancel_reason)
+        </insert>
+
     <update id="updateBatch" parameterType="java.util.List">
         UPDATE sj_job_summary rt,
                (

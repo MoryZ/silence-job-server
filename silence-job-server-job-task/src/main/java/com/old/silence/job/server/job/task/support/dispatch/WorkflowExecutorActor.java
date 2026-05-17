@@ -318,12 +318,11 @@ public class WorkflowExecutorActor extends AbstractActor {
 
     private void handlerTaskBatch(WorkflowNodeTaskExecuteDTO taskExecute, JobTaskBatchStatus taskStatus, JobOperationReason operationReason) {
 
-        WorkflowTaskBatch jobTaskBatch = new WorkflowTaskBatch();
+        WorkflowTaskBatch jobTaskBatch = workflowTaskBatchDao.selectById(taskExecute.getWorkflowTaskBatchId());
         jobTaskBatch.setId(taskExecute.getWorkflowTaskBatchId());
         jobTaskBatch.setExecutionAt(DateUtils.toNowMilli());
         jobTaskBatch.setTaskBatchStatus(taskStatus);
         jobTaskBatch.setOperationReason(operationReason);
-        jobTaskBatch.setUpdatedDate(Instant.now());
         Assert.isTrue(1 == workflowTaskBatchDao.updateById(jobTaskBatch),
                 () -> new SilenceJobServerException("更新任务失败"));
 

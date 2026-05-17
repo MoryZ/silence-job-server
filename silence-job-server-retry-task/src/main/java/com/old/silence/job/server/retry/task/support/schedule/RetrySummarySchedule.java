@@ -67,9 +67,9 @@ public class RetrySummarySchedule extends AbstractSchedule implements Lifecycle 
 
 
                 // 重试按日实时查询统计数据（00:00:00 - 23:59:59）
-                Instant todayFrom = now.atZone(zoneId).withHour(0).withMinute(0).withSecond(0).withNano(0).toInstant()
+                Instant todayFrom = now.atZone(zoneId).withHour(0).withMinute(0).withSecond(0).toInstant()
                         .plus(-i, ChronoUnit.DAYS);
-                Instant todayTo = now.atZone(zoneId).withHour(23).withMinute(59).withSecond(59).withNano(999999999).toInstant()
+                Instant todayTo = now.atZone(zoneId).withHour(23).withMinute(59).withSecond(59).toInstant()
                         .plus(-i, ChronoUnit.DAYS);
                 LambdaQueryWrapper<Retry> wrapper = new LambdaQueryWrapper<Retry>()
                         .between(Retry::getCreatedDate, todayFrom, todayTo)

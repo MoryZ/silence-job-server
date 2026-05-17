@@ -17,7 +17,6 @@ import static com.old.silence.job.common.enums.JobTaskBatchStatus.COMPLETED;
  */
 @Order(Ordered.HIGHEST_PRECEDENCE)
 @Component
-
 public class TerminalJobPrepareHandler extends AbstractJobPrepareHandler {
 
 

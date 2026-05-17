@@ -26,7 +26,6 @@ import static com.old.silence.job.common.enums.JobTaskBatchStatus.NOT_COMPLETE;
  */
 @Component(ActorGenerator.JOB_TASK_PREPARE_ACTOR)
 @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
-
 public class JobTaskPrepareActor extends AbstractActor {
 
     private static final Logger log = LoggerFactory.getLogger(JobTaskPrepareActor.class);
@@ -61,15 +60,15 @@ public class JobTaskPrepareActor extends AbstractActor {
         if (SystemTaskType.WORKFLOW.equals(jobTaskExecutorScene.getSystemTaskType())) {
             queryWrapper.eq(JobTaskBatch::getWorkflowNodeId, prepare.getWorkflowNodeId());
             queryWrapper.eq(JobTaskBatch::getWorkflowTaskBatchId, prepare.getWorkflowTaskBatchId());
-            queryWrapper.eq(JobTaskBatch::getSystemTaskType, SystemTaskType.WORKFLOW.getValue());
+            queryWrapper.eq(JobTaskBatch::getSystemTaskType, SystemTaskType.WORKFLOW);
         } else {
-            queryWrapper.eq(JobTaskBatch::getSystemTaskType, SystemTaskType.JOB.getValue());
+            queryWrapper.eq(JobTaskBatch::getSystemTaskType, SystemTaskType.JOB);
         }
 
         List<JobTaskBatch> notCompleteJobTaskBatchList = jobTaskBatchDao
                 .selectList(queryWrapper);
 
-        // 说明所以任务已经完成
+        // 说明所有任务已经完成
         if (CollectionUtils.isEmpty(notCompleteJobTaskBatchList)) {
             JobTaskBatch jobTaskBatch = new JobTaskBatch();
             // 模拟完成情况
