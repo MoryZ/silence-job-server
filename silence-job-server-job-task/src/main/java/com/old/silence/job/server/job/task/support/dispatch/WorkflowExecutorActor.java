@@ -116,9 +116,7 @@ public class WorkflowExecutorActor extends AbstractActor {
         return receiveBuilder().match(WorkflowNodeTaskExecuteDTO.class, taskExecute -> {
             log.info("工作流开始执行. [{}]", JSON.toJSONString(taskExecute));
             try {
-
                 doExecutor(taskExecute);
-
             } catch (Exception e) {
                 SilenceJobLog.LOCAL.error("workflow executor exception. [{}]", taskExecute, e);
                 handlerTaskBatch(taskExecute,

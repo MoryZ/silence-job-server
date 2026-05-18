@@ -34,7 +34,7 @@ public class StartListener implements ApplicationListener<ContextRefreshedEvent>
         System.out.println(MessageFormatter.format(SystemConstants.LOGO, "v1.8").getMessage());
         SilenceJobLog.LOCAL.info("silence-job server is preparing to start... v{}", "v1.8");
         lifecycleList.forEach(Lifecycle::start);
-        SilenceJobLog.LOCAL.info("silence-job server started successfully v{}", "v1.8");
+        SilenceJobLog.LOCAL.info("silence-job server started successfully {}", "v1.8");
         isStarted = true;
     }
 }

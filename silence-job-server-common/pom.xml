@@ -55,6 +55,7 @@
         <dependency>
             <groupId>org.apache.pekko</groupId>
             <artifactId>pekko-actor-testkit-typed_2.13</artifactId>
+            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>com.google.guava</groupId>
@@ -135,7 +136,6 @@
         <dependency>
             <groupId>com.old.silence</groupId>
             <artifactId>silence-job-server-core</artifactId>
-            <version>3.0.0-SNAPSHOT</version>
         </dependency>
 
 

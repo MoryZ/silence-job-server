@@ -1,0 +1,14 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.16.xsd">
+
+    <!-- 包含所有的 changelog 文件 -->
+    <include file="entity-design-improvement.xml" relativeToChangelogFile="true"/>
+
+    <changeSet id="import-data." author="auto-generated" dbms="h2">
+        <sqlFile path="../script/import-data.sql" relativeToChangelogFile="true" />
+    </changeSet>
+</databaseChangeLog>

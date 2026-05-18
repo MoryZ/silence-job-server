@@ -72,7 +72,7 @@ public abstract class AbstractWorkflowExecutor implements WorkflowExecutor, Init
 
                         if (CollectionUtils.isNotEmpty(jobTaskBatches)) {
                             total = jobTaskBatches.size();
-                            // ToDo
+                            // TODO
                             JobTaskBatch jobTaskBatch = jobTaskBatches.get(0);
                             if (WORKFLOW_SUCCESSOR_SKIP_EXECUTION.contains(jobTaskBatch.getOperationReason())) {
                                 context.setEvaluationResult(Boolean.FALSE);

@@ -1,10 +1,6 @@
 package com.old.silence.job.server.common.register;
 
-
-
 import java.time.Instant;
-
-
 
 public class RegisterContext {
 

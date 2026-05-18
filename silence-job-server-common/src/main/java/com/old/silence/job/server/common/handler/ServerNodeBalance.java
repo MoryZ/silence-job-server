@@ -123,7 +123,7 @@ public class ServerNodeBalance implements Lifecycle, Runnable {
         // 停止定时任务
         thread.interrupt();
 
-        SilenceJobLog.LOCAL.info("ServerNodeBalance start. ");
+        SilenceJobLog.LOCAL.info("ServerNodeBalance close. ");
         int i = serverNodeDao
                 .delete(new LambdaQueryWrapper<ServerNode>().eq(ServerNode::getHostId, ServerRegister.CURRENT_CID));
         if (1 == i) {
