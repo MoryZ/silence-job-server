@@ -205,7 +205,7 @@
                     <configuration>
                         <excludePackageNames>org.mapstruct.*</excludePackageNames>
                         <failOnError>false</failOnError>
-                        <additionalparam>-Xdoclint:none</additionalparam>
+                        <additionaparam>-Xdoclint:none</additionaparam>
                     </configuration>
                 </plugin>
             </plugins>
