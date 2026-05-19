@@ -41,7 +41,6 @@ public class RunningWorkflowPrepareHandler extends AbstractWorkflowPrePareHandle
     protected void doHandler(WorkflowTaskPrepareDTO prepare) {
         log.debug("存在运行中的任务. prepare:[{}]", JSON.toJSONString(prepare));
 
-
         // 1. 若DAG已经支持完成了，由于异常原因导致的没有更新成终态此次进行一次更新操作
         JobBlockStrategy blockStrategy = prepare.getBlockStrategy();
         if (workflowBatchHandler.complete(prepare.getWorkflowTaskBatchId())) {

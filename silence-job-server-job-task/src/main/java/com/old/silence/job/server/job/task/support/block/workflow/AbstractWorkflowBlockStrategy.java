@@ -22,7 +22,7 @@ public abstract class AbstractWorkflowBlockStrategy implements BlockStrategy, In
     protected abstract JobBlockStrategy blockStrategyEnum();
 
     @Override
-    public void afterPropertiesSet() throws Exception {
+    public void afterPropertiesSet() {
         WorkflowBlockStrategyFactory.registerBlockStrategy(blockStrategyEnum(), this);
     }
 }
