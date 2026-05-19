@@ -52,7 +52,23 @@ public class GrpcRequestHandlerActor extends AbstractActor {
             try {
                 SilenceJobRequest request = new SilenceJobRequest();
                 String body = grpcSilenceJobRequest.getBody();
-                Object[] objects = JSON.parseObject(body, Object[].class);
+                // 调试日志：打印原始 body 和解析后的 args
+                SilenceJobLog.LOCAL.info("=== Server GrpcRequestHandler Debug: body=[{}]", body);
+                
+                // 处理空 body 或 "null" 字符串
+                Object[] objects;
+                if (body == null || "null".equals(body) || body.trim().isEmpty()) {
+                    objects = new Object[0];
+                    SilenceJobLog.LOCAL.info("=== Server GrpcRequestHandler Debug: body is null/empty, using empty array");
+                } else {
+                    objects = JSON.parseObject(body, Object[].class);
+                }
+                
+                if (objects == null) {
+                    throw new IllegalArgumentException("Failed to parse body as JSON array: " + body);
+                }
+                SilenceJobLog.LOCAL.info("=== Server GrpcRequestHandler Debug: objects.length=[{}], objects[0] class=[{}], objects[0]=[{}]", 
+                    objects.length, objects.length > 0 ? objects[0].getClass().getName() : "N/A", objects.length > 0 ? objects[0] : "N/A");
                 request.setArgs(objects);
                 request.setReqId(grpcSilenceJobRequest.getReqId());
                 SilenceJobRpcResult = doProcess(uri, JSON.toJSONString(request), headersMap);

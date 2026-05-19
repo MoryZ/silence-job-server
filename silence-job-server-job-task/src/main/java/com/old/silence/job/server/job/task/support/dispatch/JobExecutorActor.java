@@ -1,6 +1,5 @@
 package com.old.silence.job.server.job.task.support.dispatch;
 
-import cn.hutool.core.lang.Assert;
 import org.apache.pekko.actor.AbstractActor;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
@@ -13,7 +12,6 @@ import org.springframework.transaction.support.TransactionCallbackWithoutResult;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.transaction.support.TransactionTemplate;
-import com.alibaba.fastjson2.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.old.silence.core.util.CollectionUtils;
 import com.old.silence.job.common.constant.SystemConstants;
@@ -55,7 +53,6 @@ import com.old.silence.job.server.common.pekko.ActorGenerator;
 import java.math.BigInteger;
 import java.text.MessageFormat;
 import java.time.Duration;
-import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
 
@@ -108,8 +105,6 @@ public class JobExecutorActor extends AbstractActor {
     public Receive createReceive() {
         return receiveBuilder().match(TaskExecuteDTO.class, taskExecute -> {
             try {
-                log.debug("准备执行任务. [{}] [{}]", Instant.now(), JSON.toJSONString(taskExecute));
-
                 transactionTemplate.execute(new TransactionCallbackWithoutResult() {
                     @Override
                     protected void doInTransactionWithoutResult(final TransactionStatus status) {
@@ -213,7 +208,6 @@ public class JobExecutorActor extends AbstractActor {
             });
 
         } finally {
-            log.debug("准备执行任务完成.[{}]", JSON.toJSONString(taskExecute));
             JobTaskBatchStatus finalTaskStatus = taskStatus;
             TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
                 @Override
@@ -243,8 +237,10 @@ public class JobExecutorActor extends AbstractActor {
         jobTaskBatch.setExecutionAt(DateUtils.toNowMilli());
         jobTaskBatch.setTaskBatchStatus(taskStatus);
         jobTaskBatch.setOperationReason(operationReason);
-        Assert.isTrue(1 == jobTaskBatchDao.updateById(jobTaskBatch),
-                () -> new SilenceJobServerException("更新任务失败"));
+        int updateCount = jobTaskBatchDao.updateById(jobTaskBatch);
+        if (updateCount != 1) {
+            throw new SilenceJobServerException("更新任务失败, taskBatchId:[{}], updateCount:[{}]", taskExecute.getTaskBatchId(), updateCount);
+        }
 
         if (JobTaskBatchStatus.NOT_SUCCESS.contains(taskStatus)) {
             var jobTaskFailAlarmEventDTO = new JobTaskFailAlarmEventDTO();

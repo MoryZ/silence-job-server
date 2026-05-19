@@ -32,6 +32,23 @@ import static com.old.silence.job.common.constant.SystemConstants.HTTP_PATH.BATC
  */
 @Component
 public class ReportLogHttpRequestHandler extends PostHttpRequestHandler {
+
+    /**
+     * 处理日志数组，提取 JOB 和 RETRY 类型的日志任务
+     */
+    private void processLogArray(JSONArray array, List<JobLogTaskDTO> jobTasks, List<RetryLogTaskDTO> retryTasks) {
+        for (int i = 0; i < array.size(); i++) {
+            JSONObject node = array.getJSONObject(i);
+            String logType = node.getString(SystemConstants.JSON_FILED_LOG_TYPE);
+
+            if (logType == null || LogTypeEnum.JOB.name().equals(logType)) {
+                jobTasks.add(node.toJavaObject(JobLogTaskDTO.class));
+            } else if (LogTypeEnum.RETRY.name().equals(logType)) {
+                retryTasks.add(node.toJavaObject(RetryLogTaskDTO.class));
+            }
+        }
+    }
+
     @Override
     public boolean supports(String path) {
         return BATCH_LOG_REPORT.equals(path);
@@ -51,25 +68,53 @@ public class ReportLogHttpRequestHandler extends PostHttpRequestHandler {
 
         Assert.notEmpty(args, () -> new SilenceJobServerException("日志上报的数据不能为空. ReqId:[{}]", retryRequest.getReqId()));
 
-        JSONArray jsonArray = JSON.parseArray(args[0].toString());
+        // 获取日志数据列表
         List<RetryLogTaskDTO> retryTasks = new ArrayList<>();
         List<JobLogTaskDTO> jobTasks = new ArrayList<>();
-
-        for (int i = 0; i < jsonArray.size(); i++) {
-            JSONObject node = jsonArray.getJSONObject(i);
-            // 直接获取字段值并转换为字符串（支持非字符串类型自动转换）
-            String logType = node.getString(SystemConstants.JSON_FILED_LOG_TYPE);
-
-            // 处理空值及JOB类型
-            if (logType == null || LogTypeEnum.JOB.name().equals(logType)) {
-                jobTasks.add(node.toJavaObject(JobLogTaskDTO.class));
-                continue;
+        
+        // 处理 args[0]，可能是各种格式：[{...}], [[{...}]], "[{...}]", "[[{...}]]"
+        Object logsData = args[0];
+        
+        // 如果是字符串，需要解析
+        if (logsData instanceof String) {
+            String strData = ((String) logsData).trim();
+            if (strData.startsWith("[[")) {
+                // 双重数组字符串格式：提取内层数组
+                int firstBracket = strData.indexOf('[');
+                int lastBracket = strData.lastIndexOf(']');
+                if (firstBracket >= 0 && lastBracket > firstBracket) {
+                    String innerStr = strData.substring(firstBracket, lastBracket + 1);
+                    try {
+                        JSONArray innerArray = JSON.parseArray(innerStr);
+                        processLogArray(innerArray, jobTasks, retryTasks);
+                    } catch (Exception e) {
+                        SilenceJobLog.LOCAL.warn("Failed to parse double array String: {}", e.getMessage());
+                    }
+                }
+            } else if (strData.startsWith("[")) {
+                // 普通数组字符串格式
+                try {
+                    JSONArray array = JSON.parseArray(strData);
+                    processLogArray(array, jobTasks, retryTasks);
+                } catch (Exception e) {
+                    SilenceJobLog.LOCAL.warn("Failed to parse array String: {}", e.getMessage());
+                }
             }
+        } else if (logsData instanceof JSONArray jsonArray) {
 
-            // 处理RETRY类型
-            if (LogTypeEnum.RETRY.name().equals(logType)) {
-                retryTasks.add(node.toJavaObject(RetryLogTaskDTO.class));
+            if (!jsonArray.isEmpty()) {
+                Object firstElement = jsonArray.get(0);
+                if (firstElement instanceof JSONArray) {
+                    // 双重数组 [[{...}]]
+                    JSONArray innerArray = jsonArray.getJSONArray(0);
+                    processLogArray(innerArray, jobTasks, retryTasks);
+                } else {
+                    // 普通数组 [{...}]
+                    processLogArray(jsonArray, jobTasks, retryTasks);
+                }
             }
+        } else {
+            SilenceJobLog.LOCAL.warn("Unknown logsData type: [{}]", logsData.getClass().getName());
         }
 
         // 批量新增日志数据

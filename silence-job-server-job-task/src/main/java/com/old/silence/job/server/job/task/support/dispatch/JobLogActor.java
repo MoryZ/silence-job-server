@@ -3,7 +3,7 @@ package com.old.silence.job.server.job.task.support.dispatch;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
-import com.old.silence.job.common.dto.JobLogTaskDTO;
+import com.old.silence.job.common.server.dto.JobLogTaskDTO;
 import com.old.silence.job.log.dto.TaskLogFieldDTO;
 import com.old.silence.job.server.domain.model.JobLogMessage;
 import com.old.silence.job.server.infrastructure.persistence.dao.JobLogMessageDao;
