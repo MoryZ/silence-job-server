@@ -104,7 +104,7 @@ public class WorkflowBatchService {
                 .eq(queryVO.getWorkflowId() != null, "batch.workflow_id", queryVO.getWorkflowId())
                 .eq(queryVO.getTaskBatchStatus() != null, "batch.task_batch_status", queryVO.getTaskBatchStatus())
                 .likeRight(StrUtil.isNotBlank(queryVO.getWorkflowName()), "flow.workflow_name", queryVO.getWorkflowName())
-                .eq("batch.deleted", 0)
+                .eq("batch.is_deleted", 0)
                 .orderByDesc("batch.id");
         List<WorkflowBatchResponseDO> batchResponseDOList = workflowTaskBatchDao.selectWorkflowBatchPageList(pageDTO,
                 wrapper);
@@ -115,6 +115,8 @@ public class WorkflowBatchService {
         objectPage.setRecords(batchResponseVOList);
         objectPage.setCurrent(pageDTO.getCurrent());
         objectPage.setSize(pageDTO.getSize());
+        objectPage.setTotal(batchResponseDOList.size());  // 关键：设置 total
+
         return objectPage;
     }
 

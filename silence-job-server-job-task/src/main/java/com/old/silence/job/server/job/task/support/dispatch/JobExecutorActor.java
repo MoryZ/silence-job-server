@@ -239,8 +239,7 @@ public class JobExecutorActor extends AbstractActor {
 
     private void handleTaskBatch(TaskExecuteDTO taskExecute, JobTaskBatchStatus taskStatus, JobOperationReason operationReason) {
 
-        JobTaskBatch jobTaskBatch = new JobTaskBatch();
-        jobTaskBatch.setId(taskExecute.getTaskBatchId());
+        JobTaskBatch jobTaskBatch = jobTaskBatchDao.selectById(taskExecute.getTaskBatchId());
         jobTaskBatch.setExecutionAt(DateUtils.toNowMilli());
         jobTaskBatch.setTaskBatchStatus(taskStatus);
         jobTaskBatch.setOperationReason(operationReason);

@@ -27,7 +27,7 @@ public class StartListener implements ApplicationListener<ContextRefreshedEvent>
     @Override
     public void onApplicationEvent(@NotNull ContextRefreshedEvent event) {
         if (isStarted) {
-            SilenceJobLog.LOCAL.info("silence-job server already started v{}", "v1.8");
+            SilenceJobLog.LOCAL.info("silence-job server already started {}", "v1.8");
             return;
         }
 

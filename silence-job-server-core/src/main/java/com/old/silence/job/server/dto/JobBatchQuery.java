@@ -13,13 +13,13 @@ public class JobBatchQuery {
     @RelationalQueryProperty(type = Part.Type.SIMPLE_PROPERTY)
     private BigInteger jobId;
 
-    //@RelationalQueryProperty(name = "", type = Part.Type.STARTING_WITH)
+    @RelationalQueryProperty(name = "job.jobName", type = Part.Type.STARTING_WITH)
     private String jobName;
 
     @RelationalQueryProperty(name = "taskBatchStatus", type = Part.Type.IN)
     private List<JobTaskBatchStatus> jobTaskBatchStatuses;
 
-    @RelationalQueryProperty(type = Part.Type.STARTING_WITH)
+    @RelationalQueryProperty(name = "job.groupName", type = Part.Type.SIMPLE_PROPERTY)
     private String groupName;
 
     public BigInteger getJobId() {

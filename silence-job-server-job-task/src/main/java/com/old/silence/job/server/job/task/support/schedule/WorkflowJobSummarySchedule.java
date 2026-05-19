@@ -85,9 +85,6 @@ public class WorkflowJobSummarySchedule extends AbstractSchedule implements Life
                 // upsert，避免唯一索引冲突
                 List<JobSummary> jobSummaryList = jobSummaryList(todayFrom, summaryWorkflowResponseDOList);
                 boolean result = jobSummaryDao.upsertBatch(jobSummaryList) > 0;
-                SilenceJobLog.LOCAL.debug(
-                        "workflow job summary dashboard upsert todayFrom:[{}] todayTo:[{}] result:[{}]",
-                        todayFrom, todayTo, result);
             }
         } catch (Exception e) {
             SilenceJobLog.LOCAL.error("workflow job summary dashboard log error", e);

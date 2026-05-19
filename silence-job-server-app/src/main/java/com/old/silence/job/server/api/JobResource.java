@@ -27,8 +27,6 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Set;
 
-
-
 @RestController
 @RequestMapping("/api/v1")
 public class JobResource {
@@ -86,6 +84,16 @@ public class JobResource {
         jobService.updateJobStatus(id, false);
     }
 
+    @PutMapping("/jobs/{id}/enable")
+    public int enable(@PathVariable BigInteger id) {
+        return jobService.updateJobStatus(id, true);
+    }
+
+    @PutMapping("/jobs/{id}/disable")
+    public int disable(@PathVariable BigInteger id) {
+        return jobService.updateJobStatus(id, false);
+    }
+
     @DeleteMapping("/jobs")
     public Boolean bulkDelete(@RequestBody @NotEmpty Set<BigInteger> ids) {
         return jobService.deleteJobByIds(ids);
@@ -97,7 +105,7 @@ public class JobResource {
     }
 
     @PostMapping(value = "/jobs/import", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public void importScene(@RequestPart("file") MultipartFile file) throws IOException {
+    public void importScene(@RequestPart MultipartFile file) throws IOException {
         var jobCommands = ImportUtils.parseList(file, JobCommand.class);
         var jobs = CollectionUtils.transformToList(jobCommands, jobMapper::convert);
         jobService.importJobs(jobs);

@@ -150,12 +150,8 @@ public class ClientRegister extends AbstractRegister {
                     }
                 }
 
-                if (CollectionUtils.isEmpty(waitRefreshDBClientNodes)) {
-                    SilenceJobLog.LOCAL.debug("clientNodes is empty");
-                    return;
-                }
+                // 节点为空时静默跳过，不打印日志
 
-                SilenceJobLog.LOCAL.debug("start refresh client nodes：{}", waitRefreshDBClientNodes);
 
                 // 刷新DB
                 refreshExpireAt(waitRefreshDBClientNodes);

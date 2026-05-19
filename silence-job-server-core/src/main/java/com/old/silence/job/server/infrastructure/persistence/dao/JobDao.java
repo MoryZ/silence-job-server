@@ -13,6 +13,6 @@ public interface JobDao extends BaseMapper<Job> {
 
     int updateBatchNextTriggerAtById(@Param("list") List<Job> list);
 
-    @Update("update sj_job set job_status=#{status} where id=#{id}")
+    @Update("update sj_job set job_status=#{status} where id=#{id} ")
     int updateStatusById(boolean status, BigInteger id);
 }

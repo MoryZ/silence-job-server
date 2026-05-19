@@ -85,7 +85,6 @@ public class JobClearLogSchedule extends AbstractSchedule implements Lifecycle {
             total = PartitionTaskUtils.process(startId -> jobTaskBatchList(startId, endTime),
                     this::processJobLogPartitionTasks, 0);
 
-            SilenceJobLog.LOCAL.debug("Job clear success total:[{}]", total);
         } catch (Exception e) {
             SilenceJobLog.LOCAL.error("job clear log error", e);
         }

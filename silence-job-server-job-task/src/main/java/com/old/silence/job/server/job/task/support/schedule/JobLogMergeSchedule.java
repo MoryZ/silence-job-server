@@ -82,7 +82,6 @@ public class JobLogMergeSchedule extends AbstractSchedule implements Lifecycle {
             total = PartitionTaskUtils.process(startId -> jobTaskBatchList(startId, endTime),
                     this::processJobLogPartitionTasks, 0);
 
-            SilenceJobLog.LOCAL.debug("job merge success total:[{}]", total);
         } catch (Exception e) {
             SilenceJobLog.LOCAL.error("job merge log error", e);
         }

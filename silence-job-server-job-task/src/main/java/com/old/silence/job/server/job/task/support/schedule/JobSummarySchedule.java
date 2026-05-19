@@ -81,9 +81,6 @@ public class JobSummarySchedule extends AbstractSchedule implements Lifecycle {
                 // upsert，避免唯一索引冲突
                 List<JobSummary> jobSummaryList = jobSummaryList(beginTime, summaryResponseDOList);
                 boolean result = jobSummaryDao.upsertBatch(jobSummaryList) > 0;
-                SilenceJobLog.LOCAL.debug(
-                        "job summary dashboard upsert todayFrom:[{}] todayTo:[{}] result:[{}]",
-                        beginTime, endTime, result);
             }
         } catch (Exception e) {
             SilenceJobLog.LOCAL.error("job summary dashboard log error", e);

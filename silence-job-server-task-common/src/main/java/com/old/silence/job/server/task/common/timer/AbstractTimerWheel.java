@@ -80,7 +80,8 @@ public abstract class AbstractTimerWheel {
     public synchronized void register(String idempotentKey, TimerTask<String> task, Duration delay) {
         register(idempotentKey, hashedWheelTimer -> {
             long delayMillis = Math.max(delay.toMillis(), 0);
-            SilenceJobLog.LOCAL.debug("加入时间轮. delay:[{}ms] idempotentKey:[{}]", delayMillis, idempotentKey);
+            // 时间轮任务注册日志过于频繁，排查问题时按需开启
+            // SilenceJobLog.LOCAL.debug("加入时间轮. delay:[{}ms] idempotentKey:[{}]", delayMillis, idempotentKey);
             timer.newTimeout(task, delayMillis, TimeUnit.MILLISECONDS);
         });
     }
