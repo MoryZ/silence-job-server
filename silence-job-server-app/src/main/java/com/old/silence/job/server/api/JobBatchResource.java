@@ -44,7 +44,6 @@ public class JobBatchResource {
         return jobBatchService.stop(taskBatchId);
     }
 
-
     @PutMapping("/jobBatches/{taskBatchId}/retry")
     public Boolean retry(@PathVariable BigInteger taskBatchId) {
         return jobBatchService.retry(taskBatchId);

@@ -1,6 +1,4 @@
 package com.old.silence.job.server.api;
-
-
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -21,7 +19,6 @@ import jakarta.validation.constraints.Size;
 import java.math.BigInteger;
 import java.util.Set;
 
-
 @RestController
 @RequestMapping("/api/v1")
 public class WorkflowBatchResource {
@@ -36,7 +33,6 @@ public class WorkflowBatchResource {
         return workflowBatchService.queryPage(page, queryVO);
     }
 
-    
     @GetMapping("/workflowBatches/{id}")
     public WorkflowDetailResponseVO getWorkflowBatchDetail(@PathVariable BigInteger id) {
         return workflowBatchService.getWorkflowBatchDetail(id);
@@ -49,8 +45,7 @@ public class WorkflowBatchResource {
 
     @DeleteMapping("/workflowBatches/ids")
     public Boolean deleteByIds(@RequestBody
-                               @NotEmpty(message = "ids不能为空")
-                               @Size(max = 100, message = "最多删除 {max} 个")
+                               @NotEmpty @Size(max = 100)
                                Set<BigInteger> ids) {
         return workflowBatchService.deleteByIds(ids);
     }

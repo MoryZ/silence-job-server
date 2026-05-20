@@ -40,7 +40,6 @@ public class SceneConfigResource {
         this.sceneConfigMapper = sceneConfigMapper;
     }
 
-
     @GetMapping(value = "/sceneConfig", params = {"pageNo", "pageSize"})
     public IPage<SceneConfigResponseVO> getSceneConfigPageList(Page<RetrySceneConfig> page, SceneConfigQuery sceneConfigQuery) {
         var queryWrapper = QueryWrapperConverter.convert(sceneConfigQuery, RetrySceneConfig.class);
@@ -52,13 +51,11 @@ public class SceneConfigResource {
         return sceneConfigService.getSceneConfigList(groupName);
     }
 
-    
     @GetMapping("/sceneConfig/{id}")
     public SceneConfigResponseVO findById(@PathVariable BigInteger id) {
         return sceneConfigService.findById(id);
     }
 
-    
     @PutMapping("/sceneConfig/{id}/enable")
     public Boolean enable(@PathVariable BigInteger id) {
         return sceneConfigService.updateStatus(id, true);
@@ -69,14 +66,12 @@ public class SceneConfigResource {
         return sceneConfigService.updateStatus(id, false);
     }
 
-    
     @PostMapping("/sceneConfig")
     public Boolean create(@RequestBody @Validated SceneConfigCommand sceneConfigCommand) {
         var sceneConfig = sceneConfigMapper.convert(sceneConfigCommand);
         return sceneConfigService.create(sceneConfig);
     }
 
-    
     @PutMapping("/sceneConfig/{id}")
     public Boolean update(@PathVariable BigInteger id, @RequestBody @Validated SceneConfigCommand sceneConfigCommand) {
         var retrySceneConfig = sceneConfigMapper.convert(sceneConfigCommand);
@@ -84,7 +79,6 @@ public class SceneConfigResource {
         return sceneConfigService.update(retrySceneConfig);
     }
 
-    
     @PostMapping(value = "/sceneConfig/import", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public void importScene(@RequestPart MultipartFile file) throws IOException {
         var sceneConfigCommands = ImportUtils.parseList(file, SceneConfigCommand.class);
@@ -92,15 +86,14 @@ public class SceneConfigResource {
         sceneConfigService.importSceneConfig(sceneConfigCommands);
     }
 
-    
     @PostMapping("/sceneConfig/export")
     public ResponseEntity<String> export(@RequestBody ExportSceneCommand exportSceneCommand) {
         return ExportUtils.doExport(sceneConfigService.exportSceneConfig(exportSceneCommand));
     }
 
-    
     @DeleteMapping("/sceneConfig/ids")
-    public boolean deleteByIds(@RequestBody @NotEmpty(message = "ids不能为空") Set<BigInteger> ids) {
+    public boolean deleteByIds(@RequestBody @NotEmpty Set<BigInteger> ids) {
         return sceneConfigService.deleteByIds(ids);
     }
+
 }

@@ -74,16 +74,6 @@ public class JobResource {
         return jobService.update(job);
     }
 
-    @PutMapping("/jobs/{id}/run")
-    public void run(@PathVariable BigInteger id) {
-        jobService.updateJobStatus(id, true);
-    }
-
-    @PutMapping("/jobs/{id}/stop")
-    public void stop(@PathVariable BigInteger id) {
-        jobService.updateJobStatus(id, false);
-    }
-
     @PutMapping("/jobs/{id}/enable")
     public int enable(@PathVariable BigInteger id) {
         return jobService.updateJobStatus(id, true);

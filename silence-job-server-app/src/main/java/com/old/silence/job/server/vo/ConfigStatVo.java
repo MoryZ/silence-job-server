@@ -3,7 +3,7 @@ package com.old.silence.job.server.vo;
 
 
 /**
- * @author MurrayZhang
+ * @author moryzang
  */
 
 public class ConfigStatVo {

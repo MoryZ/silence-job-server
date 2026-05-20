@@ -4,7 +4,6 @@ import cn.hutool.core.lang.Assert;
 import cn.hutool.core.util.StrUtil;
 
 import java.math.BigInteger;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -285,7 +284,6 @@ public class SceneConfigService {
         Assert.isTrue(CollectionUtils.isEmpty(sceneConfigs), () -> new SilenceJobServerException("导入失败. 原因:场景{}已存在",
                 StreamUtils.toSet(sceneConfigs, RetrySceneConfig::getSceneName)));
 
-        Instant now = Instant.now();
         List<RetrySceneConfig> retrySceneConfigs = CollectionUtils.transformToList(requests,sceneConfigMapper::convert);
         for (RetrySceneConfig retrySceneConfig : retrySceneConfigs) {
             if (retrySceneConfig.getBackOff().getValue().intValue() == WaitStrategies.WaitStrategyEnum.DELAY_LEVEL.getValue()) {

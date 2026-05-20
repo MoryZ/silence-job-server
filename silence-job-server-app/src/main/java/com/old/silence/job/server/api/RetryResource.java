@@ -41,14 +41,12 @@ public class RetryResource {
         this.retryService = retryService;
     }
 
-
     @GetMapping(value = "/retries", params = {"pageNo", "pageSize"})
     public IPage<RetryResponseVO> getRetryTaskPage(Page<Retry> page, RetryQuery retryQuery) {
         var queryWrapper = QueryWrapperConverter.convert(retryQuery, Retry.class);
         return retryService.getRetryPage(page, queryWrapper);
     }
 
-    
     @GetMapping("/retries/{id}")
     public RetryResponseVO findById(@RequestParam String groupName,
                                             @PathVariable BigInteger id) {
@@ -60,37 +58,31 @@ public class RetryResource {
         return retryService.updateRetryStatus(retryUpdateStatusRequestVO);
     }
 
-    
     @PostMapping("/retries")
     public int create(@RequestBody @Validated RetrySaveRequestCommand retrySaveRequestCommand) {
         return retryService.create(retrySaveRequestCommand);
     }
 
-    
     @PostMapping("/retries/generate/idempotent-id")
     public String idempotentIdGenerate(@RequestBody @Validated GenerateRetryIdempotentIdCommand generateRetryIdempotentIdCommand) {
         return  retryService.idempotentIdGenerate(generateRetryIdempotentIdCommand);
     }
 
-    
     @PutMapping("/retries/batchUpdate")
     public Integer updateRetryTaskExecutorName(@RequestBody @Validated RetryUpdateExecutorNameRequestVO requestVO) {
         return retryService.updateRetryExecutorName(requestVO);
     }
 
-    
     @DeleteMapping("/retries/batchDelete")
     public boolean batchDeleteRetry(@RequestBody @Validated BatchDeleteRetryTaskVO requestVO) {
         return retryService.batchDeleteRetry(requestVO);
     }
 
-    
     @PostMapping("/retries/batchParseLogs")
     public Integer parseLogs(@RequestBody @Validated ParseLogsVO parseLogsVO) {
         return retryService.parseLogs(parseLogsVO);
     }
 
-    
     @PostMapping("/retries/manualTrigger")
     public boolean manualTriggerRetryTask(@RequestBody @Validated ManualTriggerTaskRequestVO requestVO) {
         return retryService.manualTriggerRetryTask(requestVO);

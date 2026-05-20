@@ -1,0 +1,138 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 680 720" font-family="system-ui,-apple-system,sans-serif">
+  <defs>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L8,3 L0,6" fill="#64748b"/>
+    </marker>
+    <marker id="arrow-blue" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L8,3 L0,6" fill="#3b82f6"/>
+    </marker>
+    <filter id="shadow" x="-2%" y="-2%" width="104%" height="108%">
+      <feDropShadow dx="0" dy="1" stdDeviation="2" flood-opacity="0.08"/>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="680" height="720" fill="#fafbfc" rx="8"/>
+
+  <!-- Title -->
+  <text x="340" y="32" text-anchor="middle" font-size="16" font-weight="700" fill="#1e293b">POST /api/v1/jobs/{id}/trigger 时序图</text>
+  <text x="340" y="50" text-anchor="middle" font-size="11" fill="#94a3b8">Job 手动触发完整调用链路</text>
+
+  <!-- Lifelines -->
+  <g stroke="#e2e8f0" stroke-width="1" stroke-dasharray="4,4">
+    <line x1="80" y1="80" x2="80" y2="700"/>
+    <line x1="200" y1="80" x2="200" y2="700"/>
+    <line x1="330" y1="80" x2="330" y2="700"/>
+    <line x1="470" y1="80" x2="470" y2="700"/>
+    <line x1="600" y1="80" x2="600" y2="700"/>
+  </g>
+
+  <!-- Participant boxes -->
+  <g filter="url(#shadow)">
+    <rect x="30" y="62" width="100" height="32" rx="6" fill="#3b82f6"/>
+    <text x="80" y="83" text-anchor="middle" font-size="11" fill="white" font-weight="600">JobResource</text>
+
+    <rect x="140" y="62" width="120" height="32" rx="6" fill="#3b82f6"/>
+    <text x="200" y="83" text-anchor="middle" font-size="11" fill="white" font-weight="600">JobService</text>
+
+    <rect x="270" y="62" width="120" height="32" rx="6" fill="#8b5cf6"/>
+    <text x="330" y="83" text-anchor="middle" font-size="11" fill="white" font-weight="600">PrepareHandler</text>
+
+    <rect x="400" y="62" width="140" height="32" rx="6" fill="#f59e0b"/>
+    <text x="470" y="83" text-anchor="middle" font-size="11" fill="white" font-weight="600">BatchGenerator</text>
+
+    <rect x="540" y="62" width="120" height="32" rx="6" fill="#10b981"/>
+    <text x="600" y="83" text-anchor="middle" font-size="11" fill="white" font-weight="600">ExecutorActor</text>
+  </g>
+
+  <!-- Step 1: Controller → Service -->
+  <line x1="80" y1="110" x2="200" y2="110" stroke="#64748b" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="140" y="105" text-anchor="middle" font-size="9" fill="#475569">1. trigger(id, jobTriggerVO)</text>
+
+  <!-- Step 2: Service → DB -->
+  <rect x="230" y="122" width="130" height="22" rx="4" fill="#fef3c7" stroke="#f59e0b" stroke-width="0.5"/>
+  <text x="295" y="137" text-anchor="middle" font-size="9" fill="#92400e">2. jobDao.selectById(id)</text>
+  <text x="295" y="153" text-anchor="middle" font-size="8" fill="#94a3b8">READ sj_job</text>
+
+  <!-- Step 3: Service → DB -->
+  <rect x="230" y="162" width="130" height="22" rx="4" fill="#fef3c7" stroke="#f59e0b" stroke-width="0.5"/>
+  <text x="295" y="177" text-anchor="middle" font-size="9" fill="#92400e">3. groupConfigDao.check()</text>
+  <text x="295" y="193" text-anchor="middle" font-size="8" fill="#94a3b8">检查组是否开启</text>
+
+  <!-- Step 4: Service → PrepareHandler -->
+  <line x1="200" y1="210" x2="330" y2="210" stroke="#3b82f6" stroke-width="1.5" marker-end="url(#arrow-blue)"/>
+  <rect x="218" y="198" width="94" height="14" rx="3" fill="#eff6ff"/>
+  <text x="265" y="209" text-anchor="middle" font-size="8" fill="#3b82f6">4. doHandle(jobDTO)</text>
+
+  <!-- Step 5: DTO 设置 -->
+  <rect x="268" y="222" width="150" height="36" rx="6" fill="#f0f9ff" stroke="#93c5fd" stroke-width="0.5"/>
+  <text x="343" y="236" text-anchor="middle" font-size="9" fill="#1d4ed8" font-weight="600">5. 设置 DTO</text>
+  <text x="343" y="250" text-anchor="middle" font-size="8" fill="#64748b">nextTriggerAt=now</text>
+  <text x="343" y="261" text-anchor="middle" font-size="8" fill="#64748b">scene=MANUAL_JOB</text>
+
+  <!-- Step 6: PrepareHandler → BatchGenerator -->
+  <line x1="330" y1="275" x2="470" y2="275" stroke="#3b82f6" stroke-width="1.5" marker-end="url(#arrow-blue)"/>
+  <text x="400" y="270" text-anchor="middle" font-size="8" fill="#3b82f6">6. generateJobTaskBatch()</text>
+
+  <!-- Step 7: BatchGenerator → DB -->
+  <rect x="430" y="287" width="160" height="30" rx="4" fill="#fef3c7" stroke="#f59e0b" stroke-width="0.5"/>
+  <text x="510" y="300" text-anchor="middle" font-size="9" fill="#92400e">7. INSERT sj_job_task_batch</text>
+  <text x="510" y="313" text-anchor="middle" font-size="8" fill="#94a3b8">status=WAITING</text>
+
+  <!-- Step 8: 判断客户端 -->
+  <polygon points="470,330 520,350 470,370 420,350" fill="#fef2f2" stroke="#ef4444" stroke-width="0.5"/>
+  <text x="470" y="354" text-anchor="middle" font-size="8" fill="#dc2626">8. 有客户端?</text>
+
+  <!-- No branch -->
+  <rect x="430" y="380" width="120" height="22" rx="4" fill="#fef2f2" stroke="#ef4444" stroke-width="0.5"/>
+  <text x="490" y="395" text-anchor="middle" font-size="9" fill="#dc2626">9a. CANCEL + 告警</text>
+
+  <!-- Yes branch -->
+  <line x1="470" y1="370" x2="470" y2="415" stroke="#3b82f6" stroke-width="1.5" marker-end="url(#arrow-blue)"/>
+  <text x="478" y="398" font-size="8" fill="#10b981">✓</text>
+
+  <!-- Step 9: TimerWheel -->
+  <rect x="400" y="415" width="140" height="30" rx="6" fill="#f0fdf4" stroke="#86efac" stroke-width="0.5"/>
+  <text x="470" y="429" text-anchor="middle" font-size="9" fill="#166534">9b. JobTimerWheel</text>
+  <text x="470" y="442" text-anchor="middle" font-size="8" fill="#64748b">registerWithJob()</text>
+
+  <!-- Step 10: TimerTask -->
+  <rect x="405" y="458" width="130" height="22" rx="6" fill="#f0fdf4" stroke="#86efac" stroke-width="0.5"/>
+  <text x="470" y="473" text-anchor="middle" font-size="9" fill="#166534">10. JobTimerTask.run()</text>
+  <text x="470" y="490" text-anchor="middle" font-size="8" fill="#94a3b8">delay≈0 立即执行</text>
+
+  <!-- Step 11: ExecutorActor -->
+  <line x1="470" y1="498" x2="600" y2="498" stroke="#3b82f6" stroke-width="1.5" marker-end="url(#arrow-blue)"/>
+  <text x="535" y="493" text-anchor="middle" font-size="8" fill="#3b82f6">11. doExecute()</text>
+
+  <!-- Step 12: ClusterExecutor -->
+  <rect x="540" y="510" width="130" height="30" rx="6" fill="#f0fdf4" stroke="#86efac" stroke-width="0.5"/>
+  <text x="605" y="524" text-anchor="middle" font-size="9" fill="#166534">12. ClusterJobExecutor</text>
+  <text x="605" y="537" text-anchor="middle" font-size="8" fill="#64748b">doExecute()</text>
+
+  <!-- Step 13: RPC -->
+  <rect x="540" y="552" width="130" height="30" rx="6" fill="#faf5ff" stroke="#c084fc" stroke-width="0.5"/>
+  <text x="605" y="566" text-anchor="middle" font-size="9" fill="#7c3aed">13. RequestClientActor</text>
+  <text x="605" y="579" text-anchor="middle" font-size="8" fill="#64748b">RPC → 客户端执行</text>
+
+  <!-- Step 14: Client -->
+  <rect x="545" y="594" width="120" height="26" rx="12" fill="#1e293b"/>
+  <text x="605" y="611" text-anchor="middle" font-size="9" fill="white" font-weight="600">14. 客户端执行 Job</text>
+
+  <!-- Step 15: Callback -->
+  <line x1="600" y1="630" x2="200" y2="630" stroke="#64748b" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+  <text x="400" y="625" text-anchor="middle" font-size="8" fill="#94a3b8">15. 回调结果 → 更新状态</text>
+
+  <!-- Step 16: Summary -->
+  <rect x="200" y="645" width="260" height="30" rx="4" fill="#fef3c7" stroke="#f59e0b" stroke-width="0.5"/>
+  <text x="330" y="660" text-anchor="middle" font-size="9" fill="#92400e">16. UPDATE sj_job_task_batch SET status</text>
+  <text x="330" y="673" text-anchor="middle" font-size="8" fill="#94a3b8">SUCCESS / FAIL → 日志汇总</text>
+
+  <!-- Legend -->
+  <g transform="translate(30, 695)">
+    <rect width="10" height="10" rx="2" fill="#3b82f6"/><text x="14" y="9" font-size="8" fill="#64748b">调用</text>
+    <rect x="50" width="10" height="10" rx="2" fill="#fef3c7" stroke="#f59e0b" stroke-width="0.5"/><text x="64" y="9" font-size="8" fill="#64748b">DB操作</text>
+    <rect x="110" width="10" height="10" rx="2" fill="#f0fdf4" stroke="#86efac" stroke-width="0.5"/><text x="124" y="9" font-size="8" fill="#64748b">异步调度</text>
+    <rect x="180" width="10" height="10" rx="2" fill="#faf5ff" stroke="#c084fc" stroke-width="0.5"/><text x="194" y="9" font-size="8" fill="#64748b">RPC</text>
+  </g>
+</svg>

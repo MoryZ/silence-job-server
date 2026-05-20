@@ -23,5 +23,4 @@ public class PartitionResource {
         return groupConfigService.getTablePartitionList();
     }
 
-
 }

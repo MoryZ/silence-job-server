@@ -22,7 +22,6 @@ import com.old.silence.job.server.util.ImportUtils;
 import com.old.silence.job.server.vo.WorkflowDetailResponseVO;
 import com.old.silence.job.server.vo.WorkflowResponseVO;
 
-
 import jakarta.validation.constraints.NotEmpty;
 import java.math.BigInteger;
 import java.util.List;
@@ -71,12 +70,10 @@ public class WorkflowResource {
         return workflowService.trigger(triggerVO);
     }
 
-
     @PostMapping("/workflows/check-node-expression")
     public Pair<Integer, Object> checkNodeExpression(@RequestBody @Validated CheckDecisionVO checkDecisionVO) {
         return workflowService.checkNodeExpression(checkDecisionVO);
     }
-
 
     @PostMapping(value = "/workflows/import", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public void importScene(@RequestPart MultipartFile file) throws Exception {
@@ -85,7 +82,6 @@ public class WorkflowResource {
         var workflows = CollectionUtils.transformToList(workflowCommands, workflowMapper::convert);
         workflowService.importWorkflowTask(workflows);
     }
-
 
     @PostMapping("/workflows/export")
     public ResponseEntity<String> export(@RequestBody ExportWorkflowVO exportWorkflowVO) {

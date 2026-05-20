@@ -89,7 +89,7 @@ public class NotifyRecipientResource {
     }
 
     @DeleteMapping("/notifyRecipients/ids")
-    public Boolean batchDeleteByIds(@RequestBody @NotEmpty(message = "ids不能为空") Set<BigInteger> ids) {
+    public Boolean batchDeleteByIds(@RequestBody @NotEmpty Set<BigInteger> ids) {
         return notifyRecipientService.batchDeleteByIds(ids);
     }
 }

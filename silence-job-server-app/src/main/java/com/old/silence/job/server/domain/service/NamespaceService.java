@@ -36,13 +36,11 @@ public class NamespaceService {
     
     public IPage<NamespaceResponseVO> query(Page<Namespace> pageDTO, QueryWrapper<Namespace> queryWrapper) {
         Page<Namespace> selectPage = namespaceDao.selectPage(pageDTO, queryWrapper);
-
         return selectPage.convert(namespaceMapper::convert);
     }
 
     
     public int deleteByUniqueId(String uniqueId) {
-
         return namespaceDao.delete(new LambdaQueryWrapper<Namespace>().eq(Namespace::getUniqueId, uniqueId));
     }
 

@@ -1,0 +1,137 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 680 780" font-family="system-ui,-apple-system,sans-serif">
+  <defs>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L8,3 L0,6" fill="#64748b"/>
+    </marker>
+    <marker id="arrow-green" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L8,3 L0,6" fill="#10b981"/>
+    </marker>
+    <marker id="arrow-red" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L8,3 L0,6" fill="#ef4444"/>
+    </marker>
+    <filter id="shadow" x="-2%" y="-2%" width="104%" height="108%">
+      <feDropShadow dx="0" dy="1" stdDeviation="2" flood-opacity="0.08"/>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="680" height="780" fill="#fafbfc" rx="8"/>
+
+  <!-- Title -->
+  <rect x="20" y="15" width="640" height="50" rx="8" fill="#1e293b" filter="url(#shadow)"/>
+  <text x="340" y="38" text-anchor="middle" font-size="16" font-weight="700" fill="white">定时任务 &amp; 工作流 — 单次运行可行性分析</text>
+  <text x="340" y="55" text-anchor="middle" font-size="11" fill="#94a3b8">✅ 结论：当前代码已原生支持，无需修改！</text>
+
+  <!-- ===== Section 1: 定时扫描路径 ===== -->
+  <rect x="20" y="78" width="310" height="380" rx="8" fill="white" stroke="#ef4444" stroke-width="1.5" filter="url(#shadow)"/>
+  <rect x="20" y="78" width="310" height="28" rx="8" fill="#ef4444"/>
+  <rect x="20" y="98" width="310" height="8" fill="#ef4444"/>
+  <text x="175" y="97" text-anchor="middle" font-size="11" font-weight="600" fill="white">🔴 定时扫描路径（自动执行）</text>
+
+  <!-- Step 1: Scan -->
+  <rect x="40" y="120" width="270" height="45" rx="6" fill="#fef2f2" stroke="#fecaca" stroke-width="0.5"/>
+  <text x="55" y="138" font-size="10" font-weight="700" fill="#991b1b">1. ScanJobTaskActor / ScanWorkflowTaskActor</text>
+  <text x="55" y="155" font-size="9" fill="#64748b">每 30s 扫描一次到期任务</text>
+
+  <!-- Step 2: Status filter -->
+  <polygon points="175,180 225,205 175,230 125,205" fill="#fef2f2" stroke="#ef4444" stroke-width="1"/>
+  <text x="175" y="202" text-anchor="middle" font-size="9" fill="#991b1b" font-weight="600">2. 状态检查</text>
+  <text x="175" y="214" text-anchor="middle" font-size="8" fill="#991b1b">status=true?</text>
+
+  <!-- FALSE branch -->
+  <line x1="125" y1="205" x2="70" y2="205" stroke="#ef4444" stroke-width="1.5" marker-end="url(#arrow-red)"/>
+  <rect x="35" y="195" width="35" height="20" rx="4" fill="#fef2f2" stroke="#ef4444" stroke-width="0.5"/>
+  <text x="52" y="209" text-anchor="middle" font-size="9" fill="#ef4444" font-weight="600">✗</text>
+
+  <!-- TRUE branch -->
+  <line x1="175" y1="230" x2="175" y2="255" stroke="#10b981" stroke-width="1.5" marker-end="url(#arrow-green)"/>
+
+  <!-- Step 3: Create batch -->
+  <rect x="55" y="255" width="240" height="40" rx="6" fill="#fef3c7" stroke="#fde68a" stroke-width="0.5"/>
+  <text x="65" y="273" font-size="9" fill="#92400e">3. 创建 TaskBatch / WorkflowBatch</text>
+  <text x="65" y="287" font-size="8" fill="#94a3b8">INSERT sj_job_task_batch / sj_workflow_task_batch</text>
+
+  <!-- Step 4: TimerWheel -->
+  <rect x="55" y="305" width="240" height="35" rx="6" fill="#f0fdf4" stroke="#86efac" stroke-width="0.5"/>
+  <text x="65" y="322" font-size="9" fill="#166534">4. 注册 JobTimerWheel</text>
+  <text x="65" y="335" font-size="8" fill="#94a3b8">等待 nextTriggerAt 到期</text>
+
+  <!-- Step 5: Execute -->
+  <rect x="55" y="350" width="240" height="35" rx="6" fill="#f0fdf4" stroke="#86efac" stroke-width="0.5"/>
+  <text x="65" y="367" font-size="9" fill="#166534">5. ExecutorActor → RPC → 客户端</text>
+  <text x="65" y="380" font-size="8" fill="#94a3b8">任务实际执行</text>
+
+  <!-- Update nextTriggerAt -->
+  <rect x="55" y="395" width="240" height="35" rx="6" fill="#eff6ff" stroke="#bfdbfe" stroke-width="0.5"/>
+  <text x="65" y="412" font-size="9" fill="#1d4ed8">6. 更新 nextTriggerAt = 下次时间</text>
+  <text x="65" y="425" font-size="8" fill="#94a3b8">等待下一个 30s 周期再次扫描</text>
+
+  <!-- ===== Section 2: 手动 Trigger 路径 ===== -->
+  <rect x="350" y="78" width="310" height="380" rx="8" fill="white" stroke="#10b981" stroke-width="1.5" filter="url(#shadow)"/>
+  <rect x="350" y="78" width="310" height="28" rx="8" fill="#10b981"/>
+  <rect x="350" y="98" width="310" height="8" fill="#10b981"/>
+  <text x="505" y="97" text-anchor="middle" font-size="11" font-weight="600" fill="white">🟢 手动 Trigger 路径</text>
+
+  <!-- Step 1: API call -->
+  <rect x="370" y="120" width="270" height="45" rx="6" fill="#f0fdf4" stroke="#bbf7d0" stroke-width="0.5"/>
+  <text x="380" y="138" font-size="10" font-weight="700" fill="#166534">1. POST /jobs/{id}/trigger</text>
+  <text x="380" y="155" font-size="9" fill="#64748b">或 POST /workflows/trigger</text>
+
+  <!-- Step 2: Group check only -->
+  <polygon points="505,180 555,205 505,230 455,205" fill="#f0fdf4" stroke="#10b981" stroke-width="1"/>
+  <text x="505" y="202" text-anchor="middle" font-size="9" fill="#166534" font-weight="600">2. 只检查组状态</text>
+  <text x="505" y="214" text-anchor="middle" font-size="8" fill="#166534">group_status?</text>
+
+  <!-- Key insight -->
+  <rect x="380" y="240" width="250" height="50" rx="6" fill="#fefce8" stroke="#facc15" stroke-width="1.5"/>
+  <text x="505" y="258" text-anchor="middle" font-size="10" fill="#854d0e" font-weight="700">🔑 关键发现</text>
+  <text x="505" y="274" text-anchor="middle" font-size="9" fill="#713f12">trigger 不检查 job_status</text>
+  <text x="505" y="286" text-anchor="middle" font-size="9" fill="#713f12">也不检查 workflow_status!</text>
+
+  <!-- Step 3: Create batch -->
+  <rect x="385" y="300" width="240" height="40" rx="6" fill="#fef3c7" stroke="#fde68a" stroke-width="0.5"/>
+  <text x="395" y="318" font-size="9" fill="#92400e">3. 创建 TaskBatch (nextTriggerAt=now)</text>
+  <text x="395" y="332" font-size="8" fill="#94a3b8">scene=MANUAL_JOB / MANUAL_WORKFLOW</text>
+
+  <!-- Step 4: Execute immediately -->
+  <rect x="385" y="350" width="240" height="35" rx="6" fill="#f0fdf4" stroke="#86efac" stroke-width="0.5"/>
+  <text x="395" y="367" font-size="9" fill="#166534">4. delay≈0, 立即执行</text>
+  <text x="395" y="380" font-size="8" fill="#94a3b8">JobTimerWheel → ExecutorActor → RPC</text>
+
+  <!-- Step 5: Done -->
+  <rect x="385" y="395" width="240" height="35" rx="6" fill="#f0fdf4" stroke="#86efac" stroke-width="0.5"/>
+  <text x="395" y="412" font-size="9" fill="#166534">5. 一次性执行完成</text>
+  <text x="395" y="425" font-size="8" fill="#94a3b8">不会更新 nextTriggerAt</text>
+
+  <!-- ===== Section 3: 操作步骤 ===== -->
+  <rect x="20" y="475" width="640" height="140" rx="8" fill="white" stroke="#3b82f6" stroke-width="1.5" filter="url(#shadow)"/>
+  <rect x="20" y="475" width="640" height="28" rx="8" fill="#3b82f6"/>
+  <rect x="20" y="495" width="640" height="8" fill="#3b82f6"/>
+  <text x="340" y="494" text-anchor="middle" font-size="11" font-weight="600" fill="white">📋 操作步骤</text>
+
+  <!-- Job steps -->
+  <rect x="40" y="516" width="290" height="85" rx="6" fill="#eff6ff" stroke="#bfdbfe" stroke-width="0.5"/>
+  <text x="185" y="534" text-anchor="middle" font-size="11" font-weight="700" fill="#1e40af">Job 单次运行</text>
+  <text x="55" y="552" font-size="9" fill="#475569">1️⃣  停止自动: PUT /api/v1/jobs/{id}/disable</text>
+  <text x="55" y="568" font-size="9" fill="#475569">2️⃣  手动触发: POST /api/v1/jobs/{id}/trigger</text>
+  <text x="55" y="584" font-size="9" fill="#475569">3️⃣  恢复自动: PUT /api/v1/jobs/{id}/enable</text>
+
+  <!-- Workflow steps -->
+  <rect x="350" y="516" width="290" height="85" rx="6" fill="#faf5ff" stroke="#e9d5ff" stroke-width="0.5"/>
+  <text x="495" y="534" text-anchor="middle" font-size="11" font-weight="700" fill="#6d28d9">Workflow 单次运行</text>
+  <text x="365" y="552" font-size="9" fill="#475569">1️⃣  停止自动: PUT /api/v1/workflows/{id}/disable</text>
+  <text x="365" y="568" font-size="9" fill="#475569">2️⃣  手动触发: POST /api/v1/workflows/trigger</text>
+  <text x="365" y="584" font-size="9" fill="#475569">3️⃣  恢复自动: PUT /api/v1/workflows/{id}/enable</text>
+
+  <!-- ===== Section 4: 注意事项 ===== -->
+  <rect x="20" y="630" width="640" height="135" rx="8" fill="white" stroke="#f59e0b" stroke-width="1.5" filter="url(#shadow)"/>
+  <rect x="20" y="630" width="640" height="28" rx="8" fill="#f59e0b"/>
+  <rect x="20" y="650" width="640" height="8" fill="#f59e0b"/>
+  <text x="340" y="649" text-anchor="middle" font-size="11" font-weight="600" fill="white">⚠️ 注意事项</text>
+
+  <text x="40" y="675" font-size="10" fill="#475569">1. disable 后 next_trigger_at 不会更新，重新 enable 后需等下一个 Scan 周期（30s）</text>
+  <text x="40" y="695" font-size="10" fill="#475569">2. OpenAPI 触发同样不检查 status，外部系统也能触发停用状态的任务</text>
+  <text x="40" y="715" font-size="10" fill="#475569">3. 如果需要"停用后禁止手动触发"，需在 trigger 方法中额外加状态检查</text>
+  <text x="40" y="735" font-size="10" fill="#475569">4. 手动触发时 scene=MANUAL_JOB/MANUAL_WORKFLOW，与定时触发的场景不同</text>
+  <text x="40" y="755" font-size="10" fill="#475569">5. 手动触发可携带临时参数（tmpArgsStr/tmpWfContext），覆盖原有配置</text>
+</svg>

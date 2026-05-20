@@ -1,6 +1,5 @@
 package com.old.silence.job.server.api;
 
-
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -20,7 +19,6 @@ import com.old.silence.job.server.dto.BatchRollBackRetryDeadLetterCommand;
 import com.old.silence.job.server.dto.RetryDeadLetterQuery;
 import com.old.silence.job.server.vo.RetryDeadLetterResponseVO;
 import java.math.BigInteger;
-
 
 /**
  * 死信队列接口
@@ -47,15 +45,13 @@ public class RetryDeadLetterResource {
         return retryDeadLetterService.findById(groupName, id);
     }
 
-    
     @PostMapping("/retryDeadLetters/batchRollback")
-    public int rollback(@RequestBody @Validated BatchRollBackRetryDeadLetterCommand rollBackRetryDeadLetterVO) {
-        return retryDeadLetterService.rollback(rollBackRetryDeadLetterVO);
+    public int rollback(@RequestBody @Validated BatchRollBackRetryDeadLetterCommand batchRollBackRetryDeadLetterCommand) {
+        return retryDeadLetterService.rollback(batchRollBackRetryDeadLetterCommand);
     }
 
-    
     @DeleteMapping("/retryDeadLetters/batchDelete")
-    public boolean batchDelete(@RequestBody @Validated BatchDeleteRetryDeadLetterCommand deadLetterVO) {
-        return retryDeadLetterService.batchDelete(deadLetterVO);
+    public boolean batchDelete(@RequestBody @Validated BatchDeleteRetryDeadLetterCommand batchDeleteRetryDeadLetterCommand) {
+        return retryDeadLetterService.batchDelete(batchDeleteRetryDeadLetterCommand);
     }
 }

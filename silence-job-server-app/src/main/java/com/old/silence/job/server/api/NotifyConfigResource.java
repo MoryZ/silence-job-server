@@ -1,6 +1,5 @@
 package com.old.silence.job.server.api;
 
-
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -45,26 +44,22 @@ public class NotifyConfigResource {
         return notifyConfigService.getNotifyConfigList(page, queryWrapper);
     }
 
-    
     @GetMapping("/notifyConfig/all/{systemTaskType}")
     public List<NotifyConfig> getNotifyConfigBySystemTaskTypeList(@PathVariable SystemTaskType systemTaskType) {
         return notifyConfigService.getNotifyConfigBySystemTaskTypeList(systemTaskType);
     }
 
-    
     @GetMapping("/notifyConfig/{id}")
     public NotifyConfigResponseVO getNotifyConfigDetail(@PathVariable BigInteger id) {
         return notifyConfigService.getNotifyConfigDetail(id);
     }
 
-    
     @PostMapping("/notifyConfig")
     public Boolean create(@RequestBody @Validated NotifyConfigCommand notifyConfigCommand) {
         var notifyConfig = notifyConfigMapper.convert(notifyConfigCommand);
         return notifyConfigService.create(notifyConfig);
     }
 
-    
     @PutMapping("/notifyConfig/{id}")
     public Boolean update(@PathVariable BigInteger id, @RequestBody @Validated NotifyConfigCommand notifyConfigCommand) {
         var notifyConfig = notifyConfigMapper.convert(notifyConfigCommand);
@@ -72,13 +67,11 @@ public class NotifyConfigResource {
         return notifyConfigService.update(notifyConfig);
     }
 
-    
     @PutMapping("/notifyConfig/{id}/{status}")
     public Boolean updateStatus(@PathVariable BigInteger id, @PathVariable Boolean status) {
         return notifyConfigService.updateStatus(id, status);
     }
 
-    
     @DeleteMapping("/notifyConfig")
     public Boolean batchDeleteNotify(@RequestBody @NotEmpty Set<BigInteger> ids) {
         return notifyConfigService.batchDeleteNotify(ids);
