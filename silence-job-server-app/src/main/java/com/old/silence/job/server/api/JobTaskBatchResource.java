@@ -13,7 +13,7 @@ import com.old.silence.data.commons.converter.QueryWrapperConverter;
 import com.old.silence.job.server.domain.model.JobTaskBatch;
 import com.old.silence.job.server.domain.service.JobBatchService;
 import com.old.silence.job.server.dto.JobBatchQuery;
-import com.old.silence.job.server.vo.JobBatchResponseVO;
+import com.old.silence.job.server.vo.JobTaskBatchResponseVO;
 
 import java.math.BigInteger;
 import java.util.Set;
@@ -21,21 +21,21 @@ import java.util.Set;
 
 @RestController
 @RequestMapping("/api/v1")
-public class JobBatchResource {
+public class JobTaskBatchResource {
     private final JobBatchService jobBatchService;
 
-    public JobBatchResource(JobBatchService jobBatchService) {
+    public JobTaskBatchResource(JobBatchService jobBatchService) {
         this.jobBatchService = jobBatchService;
     }
 
     @GetMapping(value = "/jobBatches", params = {"pageNo","pageSize"})
-    public IPage<JobBatchResponseVO> getJobBatchPage(Page<JobTaskBatch> page, JobBatchQuery jobQueryVO) {
+    public IPage<JobTaskBatchResponseVO> queryPage(Page<JobTaskBatch> page, JobBatchQuery jobQueryVO) {
         var queryWrapper = QueryWrapperConverter.convert(jobQueryVO, JobTaskBatch.class);
         return jobBatchService.queryPage(page, queryWrapper);
     }
 
     @GetMapping("/jobBatches/{id}")
-    public JobBatchResponseVO getJobBatchDetail(@PathVariable BigInteger id) {
+    public JobTaskBatchResponseVO getJobBatchDetail(@PathVariable BigInteger id) {
         return jobBatchService.getJobBatchDetail(id);
     }
 

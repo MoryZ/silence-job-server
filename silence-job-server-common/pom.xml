@@ -138,7 +138,6 @@
             <artifactId>silence-job-server-core</artifactId>
         </dependency>
 
-
     </dependencies>
 
 </project>

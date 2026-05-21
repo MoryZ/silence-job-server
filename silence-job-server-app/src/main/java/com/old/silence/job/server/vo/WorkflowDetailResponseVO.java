@@ -172,7 +172,7 @@ public class WorkflowDetailResponseVO {
         /**
          * 定时任务批次信息
          */
-        private List<JobBatchResponseVO> jobBatchList;
+        private List<JobTaskBatchResponseVO> jobBatchList;
 
         /**
          * 子节点
@@ -259,11 +259,11 @@ public class WorkflowDetailResponseVO {
             this.jobTask = jobTask;
         }
 
-        public List<JobBatchResponseVO> getJobBatchList() {
+        public List<JobTaskBatchResponseVO> getJobBatchList() {
             return jobBatchList;
         }
 
-        public void setJobBatchList(List<JobBatchResponseVO> jobBatchList) {
+        public void setJobBatchList(List<JobTaskBatchResponseVO> jobBatchList) {
             this.jobBatchList = jobBatchList;
         }
 

@@ -16,7 +16,7 @@ public class BroadcastJobExecutorHandler extends AbstractJobExecutorResultHandle
             final JobTaskBatchDao jobTaskBatchDao,
             final WorkflowBatchHandler workflowBatchHandler,
             final GroupConfigDao groupConfigDao) {
-        super(jobTaskDao, jobTaskBatchDao, workflowBatchHandler, groupConfigDao);
+        super(jobTaskDao, jobTaskBatchDao, workflowBatchHandler);
     }
 
     @Override

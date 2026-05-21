@@ -15,7 +15,7 @@ public class WebMvcConfig implements WebMvcConfigurer {
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(tenantInterceptor())
                 .addPathPatterns("/**")  // 拦截所有路径
-                .excludePathPatterns("/error", "/static/**"); // 排除一些路径
+                .excludePathPatterns("/error", "/static/**", "/websocket/**"); // 排除一些路径
     }
 
     @Bean

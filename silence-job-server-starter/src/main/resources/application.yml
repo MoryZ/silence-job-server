@@ -57,4 +57,4 @@ silence:
     center:
       security:
         api:
-          white-list:
+          white-list: /websocket/**

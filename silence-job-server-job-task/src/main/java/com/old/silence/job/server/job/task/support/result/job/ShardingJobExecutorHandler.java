@@ -15,7 +15,7 @@ public class ShardingJobExecutorHandler extends AbstractJobExecutorResultHandler
             JobTaskBatchDao jobTaskBatchDao,
             WorkflowBatchHandler workflowBatchHandler,
             GroupConfigDao groupConfigDao) {
-        super(jobTaskDao, jobTaskBatchDao, workflowBatchHandler, groupConfigDao);
+        super(jobTaskDao, jobTaskBatchDao, workflowBatchHandler);
     }
 
     @Override

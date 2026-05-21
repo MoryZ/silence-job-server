@@ -7,23 +7,23 @@ import com.old.silence.core.mapstruct.MapStructSpringConfig;
 import com.old.silence.job.server.domain.model.Job;
 import com.old.silence.job.server.domain.model.JobTaskBatch;
 import com.old.silence.job.server.vo.JobBatchResponseDO;
-import com.old.silence.job.server.vo.JobBatchResponseVO;
+import com.old.silence.job.server.vo.JobTaskBatchResponseVO;
 
 import java.time.Instant;
 import java.util.Objects;
 
 
 @Mapper(componentModel = "spring", uses = MapStructSpringConfig.class)
-public interface JobBatchResponseVOConverter extends Converter<JobBatchResponseDO, JobBatchResponseVO> {
+public interface JobBatchResponseVOConverter extends Converter<JobBatchResponseDO, JobTaskBatchResponseVO> {
 
 
     @Override
     @Mapping(target = "executionAt", expression = "java(toLocalDateTime(jobBatchResponseDO.getExecutionAt()))")
-    JobBatchResponseVO convert(JobBatchResponseDO jobBatchResponseDO);
+    JobTaskBatchResponseVO convert(JobBatchResponseDO jobBatchResponseDO);
 
 
     @Mapping(target = "executionAt", expression = "java(toLocalDateTime(jobTaskBatch.getExecutionAt()))")
-    JobBatchResponseVO convert(JobTaskBatch jobTaskBatch);
+    JobTaskBatchResponseVO convert(JobTaskBatch jobTaskBatch);
 
     @Mapping(source = "jobBatch.groupName", target = "groupName")
     @Mapping(source = "jobBatch.id", target = "id")
@@ -31,7 +31,7 @@ public interface JobBatchResponseVOConverter extends Converter<JobBatchResponseD
     @Mapping(source = "jobBatch.createdDate", target="createdDate")
     @Mapping(source = "jobBatch.updatedDate", target="updatedDate")
     @Mapping(source = "job.taskType", target="taskType")
-    JobBatchResponseVO convert(JobTaskBatch jobBatch, Job job);
+    JobTaskBatchResponseVO convert(JobTaskBatch jobBatch, Job job);
 
     default Instant toLocalDateTime(Long nextTriggerAt) {
         if (Objects.isNull(nextTriggerAt) || nextTriggerAt == 0) {

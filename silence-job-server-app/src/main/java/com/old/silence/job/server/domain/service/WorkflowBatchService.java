@@ -49,7 +49,7 @@ import com.old.silence.job.server.infrastructure.persistence.dao.WorkflowNodeDao
 import com.old.silence.job.server.infrastructure.persistence.dao.WorkflowTaskBatchDao;
 import com.old.silence.job.server.job.task.support.cache.MutableGraphCache;
 import com.old.silence.job.server.job.task.support.handler.WorkflowBatchHandler;
-import com.old.silence.job.server.vo.JobBatchResponseVO;
+import com.old.silence.job.server.vo.JobTaskBatchResponseVO;
 import com.old.silence.job.server.vo.WorkflowBatchResponseDO;
 import com.old.silence.job.server.vo.WorkflowBatchResponseVO;
 import com.old.silence.job.server.vo.WorkflowDetailResponseVO;
@@ -213,16 +213,16 @@ public class WorkflowBatchService {
                 nodeInfo.setJobBatchList(
                         CollectionUtils.transformToList(jobTaskBatches, jobBatchResponseVOConverter::convert));
             } else {
-                JobBatchResponseVO jobBatchResponseVO = new JobBatchResponseVO();
+                JobTaskBatchResponseVO jobTaskBatchResponseVO = new JobTaskBatchResponseVO();
                 JobTaskConfig jobTask = nodeInfo.getJobTask();
                 if (Objects.nonNull(jobTask)) {
-                    jobBatchResponseVO.setJobId(jobTask.getJobId());
+                    jobTaskBatchResponseVO.setJobId(jobTask.getJobId());
                 }
                 // 只为前端展示提供
 //                nodeInfo.setTaskBatchStatus(NOT_HANDLE_STATUS);
 //                jobBatchResponseVO.setTaskBatchStatus(NOT_HANDLE_STATUS);
 //                jobBatchResponseVO.setOperationReason(JobOperationReasonEnum.WORKFLOW_NODE_NO_REQUIRED.getReason());
-                nodeInfo.setJobBatchList(Lists.newArrayList(jobBatchResponseVO));
+                nodeInfo.setJobBatchList(Lists.newArrayList(jobTaskBatchResponseVO));
             }
         }
 

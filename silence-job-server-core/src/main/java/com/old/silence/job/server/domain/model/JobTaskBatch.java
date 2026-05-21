@@ -1,6 +1,5 @@
 package com.old.silence.job.server.domain.model;
 
-
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 

@@ -1,7 +1,5 @@
 package com.old.silence.job.server.vo;
 
-
-
 import com.old.silence.job.common.enums.ExecutorType;
 import com.old.silence.job.common.enums.JobOperationReason;
 import com.old.silence.job.common.enums.JobTaskBatchStatus;
@@ -13,8 +11,7 @@ import java.math.BigInteger;
 import java.time.Instant;
 
 
-
-public class JobBatchResponseVO {
+public class JobTaskBatchResponseVO {
 
     private BigInteger id;
 

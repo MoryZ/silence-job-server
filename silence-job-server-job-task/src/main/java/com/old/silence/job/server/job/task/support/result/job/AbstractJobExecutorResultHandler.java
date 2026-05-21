@@ -12,7 +12,6 @@ import com.old.silence.job.common.enums.JobTaskStatus;
 import com.old.silence.job.log.SilenceJobLog;
 import com.old.silence.job.server.domain.model.JobTask;
 import com.old.silence.job.server.domain.model.JobTaskBatch;
-import com.old.silence.job.server.infrastructure.persistence.dao.GroupConfigDao;
 import com.old.silence.job.server.infrastructure.persistence.dao.JobTaskBatchDao;
 import com.old.silence.job.server.infrastructure.persistence.dao.JobTaskDao;
 import com.old.silence.job.server.job.task.dto.JobTaskFailAlarmEventDTO;
@@ -37,13 +36,11 @@ public abstract class AbstractJobExecutorResultHandler implements JobExecutorRes
     private final JobTaskDao jobTaskDao;
     private final JobTaskBatchDao jobTaskBatchDao;
     private final WorkflowBatchHandler workflowBatchHandler;
-    private final GroupConfigDao groupConfigDao;
 
-    protected AbstractJobExecutorResultHandler(JobTaskDao jobTaskDao, JobTaskBatchDao jobTaskBatchDao, WorkflowBatchHandler workflowBatchHandler, GroupConfigDao groupConfigDao) {
+    protected AbstractJobExecutorResultHandler(JobTaskDao jobTaskDao, JobTaskBatchDao jobTaskBatchDao, WorkflowBatchHandler workflowBatchHandler) {
         this.jobTaskDao = jobTaskDao;
         this.jobTaskBatchDao = jobTaskBatchDao;
         this.workflowBatchHandler = workflowBatchHandler;
-        this.groupConfigDao = groupConfigDao;
     }
 
     @Override
@@ -119,7 +116,6 @@ public abstract class AbstractJobExecutorResultHandler implements JobExecutorRes
         JobTaskBatch jobTaskBatch = new JobTaskBatch();
         jobTaskBatch.setId(context.getTaskBatchId());
         jobTaskBatch.setTaskBatchStatus(taskBatchStatus);
-        jobTaskBatch.setUpdatedDate(Instant.now());
         jobTaskBatch.setOperationReason(
                 Optional.ofNullable(context.getJobOperationReason()).orElse(JobOperationReason.NONE)
         );

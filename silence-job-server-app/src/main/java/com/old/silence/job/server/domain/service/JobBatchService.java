@@ -25,7 +25,7 @@ import com.old.silence.job.server.infrastructure.persistence.dao.JobDao;
 import com.old.silence.job.server.infrastructure.persistence.dao.JobTaskBatchDao;
 import com.old.silence.job.server.infrastructure.persistence.dao.WorkflowNodeDao;
 import com.old.silence.job.server.vo.JobBatchResponseDO;
-import com.old.silence.job.server.vo.JobBatchResponseVO;
+import com.old.silence.job.server.vo.JobTaskBatchResponseVO;
 import com.old.silence.page.PageImpl;
 
 
@@ -49,44 +49,40 @@ public class JobBatchService {
     }
 
 
-    public IPage<JobBatchResponseVO> queryPage(Page<JobTaskBatch> page, QueryWrapper<JobTaskBatch> queryWrapper) {
-
-        List<JobBatchResponseDO> batchResponseDOList = jobTaskBatchDao.selectJobBatchPageList(page, queryWrapper);
-        var jobBatchResponseVOS = CollectionUtils.transformToList(batchResponseDOList, jobBatchResponseVOConverter::convert);
-
-        return new PageImpl<>(jobBatchResponseVOS, page.getTotal());
+    public IPage<JobTaskBatchResponseVO> queryPage(Page<JobTaskBatch> page, QueryWrapper<JobTaskBatch> queryWrapper) {
+        return jobTaskBatchDao.selectPage(page, queryWrapper).convert(jobBatchResponseVOConverter::convert);
     }
 
 
-    public JobBatchResponseVO getJobBatchDetail(BigInteger id) {
+    public JobTaskBatchResponseVO getJobBatchDetail(BigInteger id) {
         JobTaskBatch jobTaskBatch = jobTaskBatchDao.selectById(id);
         if (Objects.isNull(jobTaskBatch)) {
             return null;
         }
 
         Job job = jobDao.selectById(jobTaskBatch.getJobId());
-        JobBatchResponseVO jobBatchResponseVO = jobBatchResponseVOConverter.convert(jobTaskBatch, job);
+        JobTaskBatchResponseVO jobTaskBatchResponseVO = jobBatchResponseVOConverter.convert(jobTaskBatch, job);
 
         if (jobTaskBatch.getSystemTaskType().equals(SystemTaskType.WORKFLOW)) {
             WorkflowNode workflowNode = workflowNodeDao.selectById(jobTaskBatch.getWorkflowNodeId());
-            jobBatchResponseVO.setNodeName(workflowNode.getNodeName());
+            jobTaskBatchResponseVO.setNodeName(workflowNode.getNodeName());
 
             // 回调节点
             if (SystemConstants.CALLBACK_JOB_ID.equals(jobTaskBatch.getJobId())) {
-                jobBatchResponseVO.setCallback(JSON.parseObject(workflowNode.getNodeInfo(), CallbackConfig.class));
-                jobBatchResponseVO.setExecutionAt(jobTaskBatch.getCreatedDate());
-                return jobBatchResponseVO;
+                jobTaskBatchResponseVO.setCallback(JSON.parseObject(workflowNode.getNodeInfo(), CallbackConfig.class));
+                jobTaskBatchResponseVO.setExecutionAt(jobTaskBatch.getCreatedDate());
+                return jobTaskBatchResponseVO;
             }
 
             // 条件节点
             if (SystemConstants.DECISION_JOB_ID.equals(jobTaskBatch.getJobId())) {
-                jobBatchResponseVO.setDecision(JSON.parseObject(workflowNode.getNodeInfo(), DecisionConfig.class));
-                jobBatchResponseVO.setExecutionAt(jobTaskBatch.getCreatedDate());
-                return jobBatchResponseVO;
+                jobTaskBatchResponseVO.setDecision(JSON.parseObject(workflowNode.getNodeInfo(), DecisionConfig.class));
+                jobTaskBatchResponseVO.setExecutionAt(jobTaskBatch.getCreatedDate());
+                return jobTaskBatchResponseVO;
             }
         }
 
-        return jobBatchResponseVO;
+        return jobTaskBatchResponseVO;
     }
 
 
