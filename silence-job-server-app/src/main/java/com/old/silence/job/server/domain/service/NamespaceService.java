@@ -49,7 +49,7 @@ public class NamespaceService {
         List<Namespace> namespaces = namespaceDao.selectList(
                 new LambdaQueryWrapper<Namespace>()
                         .select(Namespace::getName, Namespace::getUniqueId)
-                        .orderByDesc(Namespace::getId)
+                        .orderByAsc(Namespace::getId)
         );
         return CollectionUtils.transformToList(namespaces, namespaceMapper::convert);
     }

@@ -74,6 +74,11 @@ public class JobExecutorResultActor extends AbstractActor {
 
     private void tryCompleteAndStop(JobExecutorResultDTO jobExecutorResultDTO) {
         CompleteJobBatchDTO completeJobBatchDTO = JobTaskConverter.INSTANCE.toCompleteJobBatchDTO(jobExecutorResultDTO);
-        jobTaskBatchHandler.handleResult(completeJobBatchDTO);
+        SilenceJobLog.LOCAL.info("尝试完成批次. taskBatchId:[{}] taskId:[{}] taskType:[{}]",
+                completeJobBatchDTO.getTaskBatchId(), jobExecutorResultDTO.getTaskId(),
+                completeJobBatchDTO.getTaskType());
+        boolean completed = jobTaskBatchHandler.handleResult(completeJobBatchDTO);
+        SilenceJobLog.LOCAL.info("批次完成结果. taskBatchId:[{}] completed:[{}]",
+                completeJobBatchDTO.getTaskBatchId(), completed);
     }
 }

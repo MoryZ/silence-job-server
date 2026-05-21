@@ -9,6 +9,7 @@ import com.old.silence.job.common.enums.JobOperationReason;
 import com.old.silence.job.common.enums.JobTaskBatchStatus;
 import com.old.silence.job.common.enums.JobTaskExecutorScene;
 import com.old.silence.job.common.enums.JobTaskStatus;
+import com.old.silence.job.log.SilenceJobLog;
 import com.old.silence.job.server.domain.model.JobTask;
 import com.old.silence.job.server.domain.model.JobTaskBatch;
 import com.old.silence.job.server.infrastructure.persistence.dao.GroupConfigDao;
@@ -50,11 +51,15 @@ public abstract class AbstractJobExecutorResultHandler implements JobExecutorRes
 
         List<JobTask> jobTasks = jobTaskDao.selectList(
                 new LambdaQueryWrapper<JobTask>()
-                        .select(JobTask::getTaskStatus, JobTask::getMrStage)
+                        .select(JobTask::getId, JobTask::getTaskStatus, JobTask::getMrStage)
                         .eq(JobTask::getTaskBatchId, context.getTaskBatchId()));
 
         if (CollectionUtils.isEmpty(jobTasks) ||
                 jobTasks.stream().anyMatch(jobTask -> JobTaskStatus.NOT_COMPLETE.contains(jobTask.getTaskStatus()))) {
+            SilenceJobLog.LOCAL.info("批次未全部完成，跳过状态更新. taskBatchId:[{}] taskCount:[{}] tasks:[{}]",
+                    context.getTaskBatchId(), jobTasks.size(),
+                    jobTasks.stream().map(t -> "id=" + t.getId() + ",status=" + t.getTaskStatus())
+                            .collect(Collectors.joining("; ")));
             return;
         }
 
@@ -93,6 +98,8 @@ public abstract class AbstractJobExecutorResultHandler implements JobExecutorRes
 
         boolean res = updateStatus(context, taskBatchStatus);
         context.setTaskBatchComplete(res);
+        SilenceJobLog.LOCAL.info("批次状态更新结果. taskBatchId:[{}] targetStatus:[{}] success:[{}] isRetry:[{}]",
+                context.getTaskBatchId(), taskBatchStatus, res, context.isRetry());
         if (res) {
             // 停止客户端的任务
             stop(context);
@@ -124,11 +131,15 @@ public abstract class AbstractJobExecutorResultHandler implements JobExecutorRes
             return false;
         }
 
-        return 1 == jobTaskBatchDao.update(jobTaskBatch,
+        int updated = jobTaskBatchDao.update(jobTaskBatch,
                 new LambdaUpdateWrapper<JobTaskBatch>()
                         .eq(JobTaskBatch::getId, context.getTaskBatchId())
                         .in(!context.isRetry(), JobTaskBatch::getTaskBatchStatus, JobTaskBatchStatus.NOT_COMPLETE)
         );
+        SilenceJobLog.LOCAL.info("CAS更新批次. taskBatchId:[{}] targetStatus:[{}] isRetry:[{}] casCondition:[{}] updatedRows:[{}]",
+                context.getTaskBatchId(), taskBatchStatus, context.isRetry(),
+                context.isRetry() ? "无状态过滤" : "当前状态必须在NOT_COMPLETE中", updated);
+        return 1 == updated;
     }
 
     protected void stop(JobExecutorResultContext context) {
