@@ -4,12 +4,12 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.support.TransactionCallbackWithoutResult;
 import org.springframework.transaction.support.TransactionTemplate;
-import org.springframework.util.CollectionUtils;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.google.common.collect.Lists;
-import com.old.silence.job.common.util.StreamUtils;
+
+import com.old.silence.core.util.CollectionUtils;
 import com.old.silence.job.log.SilenceJobLog;
 import com.old.silence.job.server.common.Lifecycle;
 import com.old.silence.job.server.common.config.SystemProperties;
@@ -117,7 +117,7 @@ public class JobClearLogSchedule extends AbstractSchedule implements Lifecycle {
     public void processJobLogPartitionTasks(List<? extends PartitionTask> partitionTasks) {
 
         // Waiting for deletion JobTaskBatchList
-        List<BigInteger> partitionTasksIds = StreamUtils.toList(partitionTasks, PartitionTask::getId);
+        List<BigInteger> partitionTasksIds = CollectionUtils.transformToList(partitionTasks, PartitionTask::getId);
         if (CollectionUtils.isEmpty(partitionTasksIds)) {
             return;
         }

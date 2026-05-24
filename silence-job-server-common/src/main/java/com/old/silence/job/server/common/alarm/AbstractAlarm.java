@@ -14,7 +14,7 @@ import com.old.silence.job.common.alarm.Alarm;
 import com.old.silence.job.common.alarm.AlarmContext;
 import com.old.silence.job.common.alarm.SilenceJobAlarmFactory;
 import com.old.silence.job.common.enums.SystemTaskType;
-import com.old.silence.job.common.util.StreamUtils;
+
 import com.old.silence.job.log.SilenceJobLog;
 import com.old.silence.job.server.common.Lifecycle;
 import com.old.silence.job.server.common.cache.CacheNotifyRateLimiter;
@@ -99,7 +99,7 @@ public abstract class AbstractAlarm<E extends ApplicationEvent, A extends AlarmI
                 new LambdaQueryWrapper<NotifyConfig>()
                         .eq(NotifyConfig::getNotifyStatus, true)
                         .in(NotifyConfig::getNotifyScene, notifyScene)
-                        .in(NotifyConfig::getSystemTaskType, StreamUtils.toList(getSystemTaskType(), SystemTaskType::getValue))
+                        .in(NotifyConfig::getSystemTaskType, CollectionUtils.transformToList(getSystemTaskType(), SystemTaskType::getValue))
                         .in(NotifyConfig::getId, notifyIds)
         );
         if (CollectionUtils.isEmpty(notifyConfigs)) {
@@ -114,7 +114,7 @@ public abstract class AbstractAlarm<E extends ApplicationEvent, A extends AlarmI
                 .collect(Collectors.toSet());
 
         List<NotifyRecipient> notifyRecipients = notifyRecipientDao.selectBatchIds(recipientIds);
-        Map<BigInteger, NotifyRecipient> recipientMap = StreamUtils.toIdentityMap(notifyRecipients, NotifyRecipient::getId);
+        Map<BigInteger, NotifyRecipient> recipientMap = CollectionUtils.transformToMap(notifyRecipients, NotifyRecipient::getId);
 
         if (CollectionUtils.isEmpty(recipientIds)) {
             return Maps.newHashMap();
@@ -122,7 +122,7 @@ public abstract class AbstractAlarm<E extends ApplicationEvent, A extends AlarmI
 
         List<NotifyConfigInfo> notifyConfigInfos = AlarmInfoConverter.INSTANCE.retryToNotifyConfigInfos(notifyConfigs);
         for (NotifyConfigInfo notifyConfigInfo : notifyConfigInfos) {
-            List<RecipientInfo> recipients = StreamUtils.toList(notifyConfigInfo.getRecipientIds(), recipientId -> {
+            List<RecipientInfo> recipients = CollectionUtils.transformToList(notifyConfigInfo.getRecipientIds(), recipientId -> {
                 NotifyRecipient notifyRecipient = recipientMap.get(recipientId);
                 if (Objects.isNull(notifyRecipient)) {
                     return null;
@@ -136,7 +136,7 @@ public abstract class AbstractAlarm<E extends ApplicationEvent, A extends AlarmI
             notifyConfigInfo.setRecipientInfos(recipients);
         }
 
-        return StreamUtils.toIdentityMap(notifyConfigInfos, NotifyConfigInfo::getId);
+        return CollectionUtils.transformToMap(notifyConfigInfos, NotifyConfigInfo::getId);
     }
 
     protected abstract List<SystemTaskType> getSystemTaskType();

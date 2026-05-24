@@ -6,10 +6,11 @@ import com.old.silence.data.commons.converter.Part;
 import com.old.silence.job.common.enums.JobTaskBatchStatus;
 
 import java.math.BigInteger;
+import java.time.Instant;
 import java.util.List;
 
 
-public class JobBatchQuery {
+public class JobTaskBatchQuery {
     @RelationalQueryProperty(type = Part.Type.SIMPLE_PROPERTY)
     private BigInteger jobId;
 
@@ -21,6 +22,12 @@ public class JobBatchQuery {
 
     @RelationalQueryProperty(name = "job.groupName", type = Part.Type.SIMPLE_PROPERTY)
     private String groupName;
+
+    @RelationalQueryProperty(name = "createdDate", type = Part.Type.GREATER_THAN_EQUAL)
+    private Instant createdDateStart;
+
+    @RelationalQueryProperty(name = "createdDate", type = Part.Type.LESS_THAN_EQUAL)
+    private Instant createdDateEnd;
 
     public BigInteger getJobId() {
         return jobId;
@@ -52,5 +59,21 @@ public class JobBatchQuery {
 
     public void setGroupName(String groupName) {
         this.groupName = groupName;
+    }
+
+    public Instant getCreatedDateStart() {
+        return createdDateStart;
+    }
+
+    public void setCreatedDateStart(Instant createdDateStart) {
+        this.createdDateStart = createdDateStart;
+    }
+
+    public Instant getCreatedDateEnd() {
+        return createdDateEnd;
+    }
+
+    public void setCreatedDateEnd(Instant createdDateEnd) {
+        this.createdDateEnd = createdDateEnd;
     }
 }

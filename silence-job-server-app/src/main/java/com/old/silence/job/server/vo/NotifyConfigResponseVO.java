@@ -179,7 +179,4 @@ public class NotifyConfigResponseVO implements Serializable {
         this.updatedDate = updatedDate;
     }
 
-    private static final long serialVersionUID = 1L;
-
-
 }

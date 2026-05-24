@@ -1,8 +1,6 @@
 package com.old.silence.job.server.event;
 
 import com.old.silence.job.server.common.enums.JobLogWebSocketSceneEnum;
-import lombok.Getter;
-import lombok.Setter;
 import org.springframework.context.ApplicationEvent;
 
 /**

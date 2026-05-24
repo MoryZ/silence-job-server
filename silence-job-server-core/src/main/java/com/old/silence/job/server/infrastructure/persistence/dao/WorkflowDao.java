@@ -1,9 +1,10 @@
 package com.old.silence.job.server.infrastructure.persistence.dao;
 
 import org.apache.ibatis.annotations.Param;
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.old.silence.data.mybatis.projection.ProjectionMapperRepository;
 import com.old.silence.job.server.domain.model.Workflow;
 
+import java.math.BigInteger;
 import java.util.List;
 
 /**
@@ -12,7 +13,7 @@ import java.util.List;
  * </p>
  *
  */
-public interface WorkflowDao extends BaseMapper<Workflow> {
+public interface WorkflowDao extends ProjectionMapperRepository<Workflow, BigInteger> {
 
     int updateBatchNextTriggerAtById(@Param("list") List<Workflow> list);
 }

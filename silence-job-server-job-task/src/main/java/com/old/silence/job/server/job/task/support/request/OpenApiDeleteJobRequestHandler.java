@@ -12,7 +12,7 @@ import com.old.silence.job.common.constant.SystemConstants.HTTP_PATH;
 import com.old.silence.job.common.enums.SystemTaskType;
 import com.old.silence.job.common.model.SilenceJobRequest;
 import com.old.silence.job.common.model.SilenceJobRpcResult;
-import com.old.silence.job.common.util.StreamUtils;
+
 import com.old.silence.job.log.SilenceJobLog;
 import com.old.silence.job.server.common.handler.PostHttpRequestHandler;
 import com.old.silence.job.server.common.util.HttpHeaderUtil;
@@ -72,7 +72,7 @@ public class OpenApiDeleteJobRequestHandler extends PostHttpRequestHandler {
                 .eq(JobSummary::getSystemTaskType, SystemTaskType.JOB)
         );
         if (CollectionUtils.isNotEmpty(jobSummaries)) {
-            jobSummaryDao.deleteBatchIds(StreamUtils.toSet(jobSummaries, JobSummary::getId));
+            jobSummaryDao.deleteBatchIds(CollectionUtils.transformToSet(jobSummaries, JobSummary::getId));
         }
 
         return new SilenceJobRpcResult(true, request.getReqId());

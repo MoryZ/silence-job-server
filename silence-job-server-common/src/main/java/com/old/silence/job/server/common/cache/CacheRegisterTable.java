@@ -7,7 +7,7 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.Sets;
 import com.old.silence.core.util.CollectionUtils;
 import com.old.silence.job.common.context.SilenceSpringContext;
-import com.old.silence.job.common.util.StreamUtils;
+
 import com.old.silence.job.log.SilenceJobLog;
 import com.old.silence.job.server.common.Lifecycle;
 import com.old.silence.job.server.common.convert.RegisterNodeInfoConverter;
@@ -140,7 +140,7 @@ public class CacheRegisterTable implements Lifecycle {
      */
     public static Set<String> getPodIdSet(String groupName) {
         //TODO 并没有使用到namespaceId
-        return StreamUtils.toSet(getServerNodeSet(groupName, null), RegisterNodeInfo::getHostId);
+        return CollectionUtils.transformToSet(getServerNodeSet(groupName, null), RegisterNodeInfo::getHostId);
     }
 
 

@@ -10,6 +10,7 @@ import com.old.silence.job.server.domain.model.SequenceAlloc;
  * </p>
  *
  */
+@Mapper
 public interface SequenceAllocDao extends BaseMapper<SequenceAlloc> {
 
 }

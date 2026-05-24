@@ -9,6 +9,7 @@ import org.springframework.web.multipart.MultipartFile;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.old.silence.core.util.CollectionUtils;
+import com.old.silence.data.commons.converter.QueryWrapperConverter;
 import com.old.silence.job.server.api.assembler.WorkflowMapper;
 import com.old.silence.job.server.domain.model.Workflow;
 import com.old.silence.job.server.domain.service.WorkflowService;
@@ -42,8 +43,8 @@ public class WorkflowResource {
 
 
     @GetMapping("/workflows/{id}")
-    public WorkflowDetailResponseVO getWorkflowDetail(@PathVariable BigInteger id) {
-        return workflowService.getWorkflowDetail(id);
+    public WorkflowDetailResponseVO findById(@PathVariable BigInteger id) {
+        return workflowService.findById(id);
     }
 
     @GetMapping(path = "/workflows", params={"!pageNo", "!pageSize"})
@@ -56,7 +57,8 @@ public class WorkflowResource {
 
     @GetMapping(value = "/workflows", params = {"pageNo", "pageSize"})
     public IPage<WorkflowResponseVO> listPage(Page<Workflow> page, WorkflowQuery queryVO) {
-        return workflowService.queryPage(page, queryVO);
+        var queryWrapper = QueryWrapperConverter.convert(queryVO, Workflow.class);
+        return workflowService.queryPage(page, queryWrapper);
     }
 
     @PostMapping("/workflows")

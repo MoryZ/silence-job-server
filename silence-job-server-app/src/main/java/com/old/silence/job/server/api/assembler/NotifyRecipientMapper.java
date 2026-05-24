@@ -15,8 +15,7 @@ public interface NotifyRecipientMapper extends Converter<NotifyRecipientCommand,
 
 
     @Override
-    NotifyRecipient convert(NotifyRecipientCommand source);
-
+    NotifyRecipient convert(NotifyRecipientCommand command);
 
     NotifyRecipientResponseVO convert(NotifyRecipient notifyRecipient);
 

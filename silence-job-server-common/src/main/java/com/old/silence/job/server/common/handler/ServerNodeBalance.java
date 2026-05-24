@@ -4,7 +4,7 @@ import org.springframework.stereotype.Component;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.old.silence.core.util.CollectionUtils;
 import com.old.silence.job.common.enums.NodeType;
-import com.old.silence.job.common.util.StreamUtils;
+
 import com.old.silence.job.log.SilenceJobLog;
 import com.old.silence.job.server.common.Lifecycle;
 import com.old.silence.job.server.common.allocate.server.AllocateMessageQueueAveragely;
@@ -154,9 +154,9 @@ public class ServerNodeBalance implements Lifecycle, Runnable {
                 ConcurrentMap<String/*hostId*/, RegisterNodeInfo> concurrentMap = Optional.ofNullable(CacheRegisterTable
                         .get(ServerRegister.GROUP_NAME)).orElse(new ConcurrentHashMap<>());
 
-                Set<String> remoteHostIds = StreamUtils.toSet(remotePods, ServerNode::getHostId);
+                Set<String> remoteHostIds = CollectionUtils.transformToSet(remotePods, ServerNode::getHostId);
 
-                Set<String> localHostIds = StreamUtils.toSet(concurrentMap.values(), RegisterNodeInfo::getHostId);
+                Set<String> localHostIds = CollectionUtils.transformToSet(concurrentMap.values(), RegisterNodeInfo::getHostId);
 
                 // 无缓存的节点触发refreshCache
                 if (CollectionUtils.isEmpty(concurrentMap)

@@ -43,7 +43,7 @@ public class WorkflowBatchResource {
         return workflowBatchService.stop(id);
     }
 
-    @DeleteMapping("/workflowBatches/ids")
+    @DeleteMapping("/workflowBatches")
     public Boolean deleteByIds(@RequestBody
                                @NotEmpty @Size(max = 100)
                                Set<BigInteger> ids) {

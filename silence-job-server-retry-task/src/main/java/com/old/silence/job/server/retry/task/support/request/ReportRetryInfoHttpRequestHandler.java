@@ -11,12 +11,12 @@ import org.springframework.transaction.TransactionSystemException;
 import org.springframework.transaction.annotation.Transactional;
 import com.alibaba.fastjson2.JSON;
 import com.github.rholder.retry.*;
+import com.old.silence.core.util.CollectionUtils;
 import com.old.silence.job.common.enums.HeadersEnum;
 import com.old.silence.job.common.enums.TaskGeneratorSceneEnum;
 import com.old.silence.job.common.model.SilenceJobRequest;
 import com.old.silence.job.common.model.SilenceJobRpcResult;
 import com.old.silence.job.common.server.dto.RetryTaskDTO;
-import com.old.silence.job.common.util.StreamUtils;
 import com.old.silence.job.log.SilenceJobLog;
 import com.old.silence.job.server.common.handler.PostHttpRequestHandler;
 import com.old.silence.job.server.exception.SilenceJobServerException;
@@ -25,6 +25,7 @@ import com.old.silence.job.server.retry.task.support.generator.retry.TaskContext
 import com.old.silence.job.server.retry.task.support.generator.retry.TaskGenerator;
 
 import java.io.IOException;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -74,10 +75,10 @@ public class ReportRetryInfoHttpRequestHandler extends PostHttpRequestHandler {
 
             SilenceJobLog.LOCAL.info("begin handler report data. <|>{}<|>", JSON.toJSONString(retryTaskList));
 
-            Set<String> set = StreamUtils.toSet(retryTaskList, RetryTaskDTO::getGroupName);
+            Set<String> set = CollectionUtils.transformToSet(retryTaskList, RetryTaskDTO::getGroupName);
             Assert.isTrue(set.size() <= 1, () -> new SilenceJobServerException("批量上报数据,同一批次只能是相同的组. reqId:[{}]", retryRequest.getReqId()));
 
-            Map<String, List<RetryTaskDTO>> map = StreamUtils.groupByKey(retryTaskList, RetryTaskDTO::getSceneName);
+            Map<String, Collection<RetryTaskDTO>> map = CollectionUtils.groupingBy(retryTaskList, RetryTaskDTO::getSceneName);
 
             Retryer<Object> retryer = RetryerBuilder.newBuilder()
                     .retryIfException(throwable -> {

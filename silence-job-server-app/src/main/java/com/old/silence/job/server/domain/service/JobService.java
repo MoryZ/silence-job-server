@@ -25,8 +25,6 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.old.silence.job.common.constant.SystemConstants;
 import com.old.silence.job.common.enums.JobTaskExecutorScene;
 import com.old.silence.job.common.enums.SystemTaskType;
-import com.old.silence.job.common.util.StreamUtils;
-import com.old.silence.job.server.api.assembler.JobMapper;
 import com.old.silence.job.server.api.assembler.JobResponseVOMapper;
 import com.old.silence.job.server.common.WaitStrategy;
 import com.old.silence.job.server.common.config.SystemProperties;
@@ -44,12 +42,13 @@ import com.old.silence.job.server.exception.SilenceJobServerException;
 import com.old.silence.job.server.handler.GroupHandler;
 import com.old.silence.job.server.infrastructure.persistence.dao.GroupConfigDao;
 import com.old.silence.job.server.infrastructure.persistence.dao.JobDao;
+import com.old.silence.job.server.infrastructure.persistence.dao.JobNotifyConfigRelationDao;
 import com.old.silence.job.server.infrastructure.persistence.dao.JobSummaryDao;
-import com.old.silence.job.server.infrastructure.persistence.dao.SystemUserDao;
 import com.old.silence.job.server.job.task.dto.JobTaskPrepareDTO;
 import com.old.silence.job.server.job.task.support.JobPrepareHandler;
 import com.old.silence.job.server.job.task.support.JobTaskConverter;
 import com.old.silence.job.server.job.task.support.cache.ResidentTaskCache;
+import com.old.silence.job.server.vo.JobAndJobNotifyConfigRelationView;
 import com.old.silence.job.server.vo.JobResponseVO;
 
 import com.old.silence.core.util.CollectionUtils;
@@ -65,23 +64,21 @@ public class JobService {
     private final GroupConfigDao groupConfigDao;
     private final GroupHandler groupHandler;
     private final JobSummaryDao jobSummaryDao;
-    private final SystemUserDao systemUserDao;
+    private final JobNotifyConfigRelationDao jobNotifyConfigRelationDao;
     private final JobResponseVOMapper jobResponseVOMapper;
-    private final JobMapper jobMapper;
 
     public JobService(SystemProperties systemProperties, JobDao jobDao,
                       JobPrepareHandler terminalJobPrepareHandler, GroupConfigDao groupConfigDao,
-                      GroupHandler groupHandler, JobSummaryDao jobSummaryDao,
-                      SystemUserDao systemUserDao, JobResponseVOMapper jobResponseVOMapper, JobMapper jobMapper) {
+                      GroupHandler groupHandler, JobSummaryDao jobSummaryDao, JobNotifyConfigRelationDao jobNotifyConfigRelationDao,
+                      JobResponseVOMapper jobResponseVOMapper) {
         this.systemProperties = systemProperties;
         this.jobDao = jobDao;
         this.terminalJobPrepareHandler = terminalJobPrepareHandler;
         this.groupConfigDao = groupConfigDao;
         this.groupHandler = groupHandler;
         this.jobSummaryDao = jobSummaryDao;
-        this.systemUserDao = systemUserDao;
+        this.jobNotifyConfigRelationDao = jobNotifyConfigRelationDao;
         this.jobResponseVOMapper = jobResponseVOMapper;
-        this.jobMapper = jobMapper;
     }
 
     private static Long calculateNextTriggerAt(Job job, Long time) {
@@ -106,7 +103,8 @@ public class JobService {
 
     
     public JobResponseVO findById(BigInteger id) {
-        Job job = jobDao.selectById(id);
+        JobAndJobNotifyConfigRelationView job = jobDao.findById(id, JobAndJobNotifyConfigRelationView.class)
+                .orElse(null);
         return jobResponseVOMapper.convert(job);
     }
 
@@ -123,13 +121,21 @@ public class JobService {
                 % systemProperties.getBucketTotal());
         job.setNextTriggerAt(calculateNextTriggerAt(job, DateUtils.toNowMilli()));
         job.setId(null);
-        return 1 == jobDao.insert(job);
+        var result = (1 == jobDao.insert(job));
+        if (CollectionUtils.isEmpty(job.getNotifyRelations())) {
+            job.getNotifyRelations().forEach(relation -> {
+                relation.setJobId(job.getId());
+            });
+            jobNotifyConfigRelationDao.insertBatch(job.getNotifyRelations());
+        }
+
+        return result;
     }
 
     
     public boolean update(Job job) {
-
-        Job jobDb = jobDao.selectById(job.getId());
+        var id = job.getId();
+        Job jobDb = jobDao.selectById(id);
 
         // 判断常驻任务
         job.setResident(isResident(job));
@@ -141,7 +147,7 @@ public class JobService {
             job.setNextTriggerAt(calculateNextTriggerAt(job, DateUtils.toNowMilli()));
         } else if (jobDb.getResident() && !job.getResident()) {
             // 常驻任务的触发时间
-            long time = Optional.ofNullable(ResidentTaskCache.get(job.getId()))
+            long time = Optional.ofNullable(ResidentTaskCache.get(id))
                     .orElse(DateUtils.toNowMilli());
             job.setNextTriggerAt(calculateNextTriggerAt(job, time));
             // 老的是不是常驻任务 新的是常驻任务 需要使用当前时间计算下次触发时间
@@ -151,7 +157,17 @@ public class JobService {
 
         // 禁止更新组
         job.setGroupName(null);
-        return 1 == jobDao.updateById(job);
+        var result = 1 == jobDao.updateById(job);
+        if (CollectionUtils.isEmpty(job.getNotifyRelations())) {
+            jobNotifyConfigRelationDao.deleteByJobId(id);
+            job.getNotifyRelations().forEach(relation -> {
+                relation.setJobId(id);
+            });
+            jobNotifyConfigRelationDao.insertBatch(job.getNotifyRelations());
+        } else {
+            jobNotifyConfigRelationDao.deleteByJobId(id);
+        }
+        return result;
     }
 
     private Boolean isResident(Job job) {
@@ -206,7 +222,7 @@ public class JobService {
     @Transactional(rollbackFor = Exception.class)
     public void importJobs(List<Job> jobs) {
         groupHandler.validateGroupExistence(
-                StreamUtils.toSet(jobs, Job::getGroupName)
+                CollectionUtils.transformToSet(jobs, Job::getGroupName)
         );
         jobs.forEach(this::create);
     }
@@ -225,7 +241,7 @@ public class JobService {
                                     .gt(Job::getId, startId)
                                     .orderByAsc(Job::getId)
                     ).getRecords();
-                    return StreamUtils.toList(jobList, JobPartitionTask::new);
+                    return CollectionUtils.transformToList(jobList, JobPartitionTask::new);
                 },
                 partitionTasks -> {
                     List<JobPartitionTask> jobPartitionTasks = (List<JobPartitionTask>) partitionTasks;
@@ -252,7 +268,7 @@ public class JobService {
                 .eq(JobSummary::getSystemTaskType, SystemTaskType.JOB.getValue())
         );
         if (CollectionUtils.isNotEmpty(jobSummaries)) {
-            jobSummaryDao.deleteBatchIds(StreamUtils.toSet(jobSummaries, JobSummary::getId));
+            jobSummaryDao.deleteBatchIds(CollectionUtils.transformToSet(jobSummaries, JobSummary::getId));
         }
 
         return Boolean.TRUE;

@@ -40,7 +40,6 @@ public class NotifyConfigResource {
     @GetMapping(value = "/notifyConfig", params = {"pageNo", "pageSize"})
     public IPage<NotifyConfigResponseVO> getNotifyConfigList(Page<NotifyConfig> page, NotifyConfigQuery notifyConfigQuery) {
         var queryWrapper = QueryWrapperConverter.convert(notifyConfigQuery, NotifyConfig.class);
-
         return notifyConfigService.getNotifyConfigList(page, queryWrapper);
     }
 
@@ -50,8 +49,8 @@ public class NotifyConfigResource {
     }
 
     @GetMapping("/notifyConfig/{id}")
-    public NotifyConfigResponseVO getNotifyConfigDetail(@PathVariable BigInteger id) {
-        return notifyConfigService.getNotifyConfigDetail(id);
+    public NotifyConfigResponseVO findById(@PathVariable BigInteger id) {
+        return notifyConfigService.findById(id);
     }
 
     @PostMapping("/notifyConfig")

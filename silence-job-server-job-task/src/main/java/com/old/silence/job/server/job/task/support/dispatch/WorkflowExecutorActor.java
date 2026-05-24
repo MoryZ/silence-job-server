@@ -19,7 +19,7 @@ import com.old.silence.job.common.enums.JobNotifyScene;
 import com.old.silence.job.common.enums.JobOperationReason;
 import com.old.silence.job.common.enums.JobTaskBatchStatus;
 import com.old.silence.job.common.enums.WorkflowNodeType;
-import com.old.silence.job.common.util.StreamUtils;
+
 import com.old.silence.job.log.SilenceJobLog;
 import com.old.silence.job.server.common.util.DateUtils;
 import com.old.silence.job.server.domain.model.Job;
@@ -51,6 +51,8 @@ import java.math.BigInteger;
 import java.text.MessageFormat;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -85,9 +87,9 @@ public class WorkflowExecutorActor extends AbstractActor {
         this.workflowBatchHandler = workflowBatchHandler;
     }
 
-    private static void fillParentOperationReason(final List<JobTaskBatch> allJobTaskBatchList,
-                                                  final List<JobTaskBatch> parentJobTaskBatchList, final WorkflowNode parentWorkflowNode,
-                                                  final WorkflowExecutorContext context) {
+    private static void fillParentOperationReason(List<JobTaskBatch> allJobTaskBatchList,
+                                                  Collection<JobTaskBatch> parentJobTaskBatchList, WorkflowNode parentWorkflowNode,
+                                                  WorkflowExecutorContext context) {
         JobTaskBatch jobTaskBatch = allJobTaskBatchList.stream()
                 .filter(batch -> !WORKFLOW_SUCCESSOR_SKIP_EXECUTION.contains(batch.getOperationReason()))
                 .findFirst().orElse(null);
@@ -107,7 +109,7 @@ public class WorkflowExecutorActor extends AbstractActor {
 
             context.setParentOperationReason(JobOperationReason.NONE);
         } else {
-            context.setParentOperationReason(parentJobTaskBatchList.get(0).getOperationReason());
+            context.setParentOperationReason(new ArrayList<>(parentJobTaskBatchList).get(0).getOperationReason());
         }
     }
 
@@ -192,10 +194,10 @@ public class WorkflowExecutorActor extends AbstractActor {
                 .in(WorkflowNode::getId, Sets.union(allSuccessors, Sets.newHashSet(taskExecute.getParentId())))
                 .orderByAsc(WorkflowNode::getPriorityLevel));
 
-        Map<BigInteger, List<JobTaskBatch>> jobTaskBatchMap = StreamUtils.groupByKey(allJobTaskBatchList,
+        Map<BigInteger, Collection<JobTaskBatch>> jobTaskBatchMap = CollectionUtils.groupingBy(allJobTaskBatchList,
                 JobTaskBatch::getWorkflowNodeId);
-        Map<BigInteger, WorkflowNode> workflowNodeMap = StreamUtils.toIdentityMap(workflowNodes, WorkflowNode::getId);
-        List<JobTaskBatch> parentJobTaskBatchList = jobTaskBatchMap.get(taskExecute.getParentId());
+        Map<BigInteger, WorkflowNode> workflowNodeMap = CollectionUtils.transformToMap(workflowNodes, WorkflowNode::getId);
+        Collection<JobTaskBatch> parentJobTaskBatchList = jobTaskBatchMap.get(taskExecute.getParentId());
 
         WorkflowNode parentWorkflowNode = workflowNodeMap.get(taskExecute.getParentId());
 
@@ -218,19 +220,19 @@ public class WorkflowExecutorActor extends AbstractActor {
 
             // 此次的并发数与当时父节点的兄弟节点的数量一致
             workflowBatchHandler.mergeWorkflowContextAndRetry(workflowTaskBatch,
-                    StreamUtils.toSet(allJobTaskBatchList, JobTaskBatch::getId));
+                    CollectionUtils.transformToSet(allJobTaskBatchList, JobTaskBatch::getId));
         }
 
-        List<Job> jobs = jobDao.selectBatchIds(StreamUtils.toSet(workflowNodes, WorkflowNode::getJobId));
-        Map<BigInteger, Job> jobMap = StreamUtils.toIdentityMap(jobs, Job::getId);
+        List<Job> jobs = jobDao.selectBatchIds(CollectionUtils.transformToSet(workflowNodes, WorkflowNode::getJobId));
+        Map<BigInteger, Job> jobMap = CollectionUtils.transformToMap(jobs, Job::getId);
 
         // 只会条件节点会使用
         Object evaluationResult = null;
-        log.debug("待执行的节点为. workflowNodes:[{}]", StreamUtils.toList(workflowNodes, WorkflowNode::getId));
+        log.debug("待执行的节点为. workflowNodes:[{}]", CollectionUtils.transformToList(workflowNodes, WorkflowNode::getId));
         for (WorkflowNode workflowNode : workflowNodes) {
 
             // 批次已经存在就不在重复生成
-            List<JobTaskBatch> jobTaskBatchList = jobTaskBatchMap.get(workflowNode.getId());
+            Collection<JobTaskBatch> jobTaskBatchList = jobTaskBatchMap.get(workflowNode.getId());
             if (CollectionUtils.isNotEmpty(jobTaskBatchList)) {
                 continue;
             }
@@ -266,8 +268,8 @@ public class WorkflowExecutorActor extends AbstractActor {
 
     }
 
-    private boolean arePredecessorsComplete(final WorkflowNodeTaskExecuteDTO taskExecute, Set<BigInteger> predecessors,
-                                            Map<BigInteger, List<JobTaskBatch>> jobTaskBatchMap, WorkflowNode waitExecWorkflowNode,
+    private boolean arePredecessorsComplete(WorkflowNodeTaskExecuteDTO taskExecute, Set<BigInteger> predecessors,
+                                            Map<BigInteger, Collection<JobTaskBatch>> jobTaskBatchMap, WorkflowNode waitExecWorkflowNode,
                                             Map<BigInteger, WorkflowNode> workflowNodeMap) {
 
         // 判断所有节点是否都完成
@@ -276,7 +278,7 @@ public class WorkflowExecutorActor extends AbstractActor {
                 continue;
             }
 
-            List<JobTaskBatch> jobTaskBatches = jobTaskBatchMap.get(nodeId);
+            Collection<JobTaskBatch> jobTaskBatches = jobTaskBatchMap.get(nodeId);
             // 说明此节点未执行, 继续等待执行完成
             if (CollectionUtils.isEmpty(jobTaskBatches)) {
                 SilenceJobLog.LOCAL.info("批次为空存在未完成的兄弟节点. [{}] 待执行节点:[{}]", nodeId,

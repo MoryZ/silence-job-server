@@ -2,14 +2,6 @@ package com.old.silence.job.server.domain.service;
 
 import cn.hutool.core.lang.Assert;
 import cn.hutool.core.util.StrUtil;
-
-import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
-
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
@@ -17,13 +9,14 @@ import com.alibaba.fastjson2.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.plugins.pagination.PageDTO;
-import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.google.common.collect.Sets;
-import com.old.silence.job.common.util.StreamUtils;
-import com.old.silence.job.server.api.assembler.SceneConfigMapper;
-import com.old.silence.job.server.api.assembler.SceneConfigResponseVOMapper;
+import com.old.silence.core.exception.ResourceNotFoundException;
+import com.old.silence.core.util.CollectionUtils;
+import com.old.silence.job.server.api.assembler.RetrySceneConfigMapper;
+import com.old.silence.job.server.api.assembler.RetrySceneConfigResponseVOMapper;
 import com.old.silence.job.server.api.config.TenantContext;
 import com.old.silence.job.server.common.dto.PartitionTask;
 import com.old.silence.job.server.common.strategy.WaitStrategies;
@@ -41,57 +34,76 @@ import com.old.silence.job.server.handler.SyncConfigHandler;
 import com.old.silence.job.server.infrastructure.persistence.dao.RetryDao;
 import com.old.silence.job.server.infrastructure.persistence.dao.RetryDeadLetterDao;
 import com.old.silence.job.server.infrastructure.persistence.dao.RetrySceneConfigDao;
+import com.old.silence.job.server.infrastructure.persistence.dao.RetrySceneConfigNotifyConfigRelationDao;
 import com.old.silence.job.server.infrastructure.persistence.dao.RetrySummaryDao;
-import com.old.silence.job.server.vo.SceneConfigResponseVO;
-import com.old.silence.core.util.CollectionUtils;
+import com.old.silence.job.server.vo.RetrySceneConfigAndRetrySceneConfigNotifyConfigRelationView;
+import com.old.silence.job.server.vo.RetrySceneConfigResponseVO;
+
+import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 
 
 @Service
 @Validated
-public class SceneConfigService {
+public class RetrySceneConfigService {
 
     private final RetrySceneConfigDao retrySceneConfigDao;
+    private final RetrySceneConfigNotifyConfigRelationDao retrySceneConfigNotifyConfigRelationDao;
     private final RetryDao retryDao;
     private final RetryDeadLetterDao retryDeadLetterDao;
     private final GroupHandler groupHandler;
     private final RetrySummaryDao retrySummaryDao;
-    private final SceneConfigResponseVOMapper sceneConfigResponseVOMapper;
-    private final SceneConfigMapper sceneConfigMapper;
+    private final RetrySceneConfigResponseVOMapper retrySceneConfigResponseVOMapper;
+    private final RetrySceneConfigMapper retrySceneConfigMapper;
 
-    public SceneConfigService(RetrySceneConfigDao retrySceneConfigDao, RetryDao retryDao,
-                              RetryDeadLetterDao retryDeadLetterDao, GroupHandler groupHandler,
-                              RetrySummaryDao retrySummaryDao, SceneConfigResponseVOMapper sceneConfigResponseVOMapper,
-                              SceneConfigMapper sceneConfigMapper) {
+    public RetrySceneConfigService(RetrySceneConfigDao retrySceneConfigDao, RetrySceneConfigNotifyConfigRelationDao retrySceneConfigNotifyConfigRelationDao, RetryDao retryDao,
+                                   RetryDeadLetterDao retryDeadLetterDao, GroupHandler groupHandler,
+                                   RetrySummaryDao retrySummaryDao, RetrySceneConfigResponseVOMapper retrySceneConfigResponseVOMapper,
+                                   RetrySceneConfigMapper retrySceneConfigMapper) {
+        this.retrySceneConfigNotifyConfigRelationDao = retrySceneConfigNotifyConfigRelationDao;
         this.retryDeadLetterDao = retryDeadLetterDao;
         this.retrySceneConfigDao = retrySceneConfigDao;
         this.retryDao = retryDao;
         this.groupHandler = groupHandler;
         this.retrySummaryDao = retrySummaryDao;
-        this.sceneConfigResponseVOMapper = sceneConfigResponseVOMapper;
-        this.sceneConfigMapper = sceneConfigMapper;
+        this.retrySceneConfigResponseVOMapper = retrySceneConfigResponseVOMapper;
+        this.retrySceneConfigMapper = retrySceneConfigMapper;
     }
 
-
-    public IPage<SceneConfigResponseVO> queryPage(Page<RetrySceneConfig> pageDTO, QueryWrapper<RetrySceneConfig> queryWrapper) {
-        var retrySceneConfigPage = retrySceneConfigDao.selectPage(pageDTO, queryWrapper);
-
-        return retrySceneConfigPage.convert(sceneConfigResponseVOMapper::convert);
+    private static void checkExecuteInterval(Byte backOff, String triggerInterval) {
+        if (List.of(WaitStrategies.WaitStrategyEnum.FIXED.getValue(),
+                WaitStrategies.WaitStrategyEnum.RANDOM.getValue()).contains(backOff.intValue())) {
+            if (Integer.parseInt(triggerInterval) < 10) {
+                throw new SilenceJobServerException("间隔时间不得小于10");
+            }
+        } else if (backOff.intValue() == WaitStrategies.WaitStrategyEnum.CRON.getValue()) {
+            if (CronUtils.getExecuteInterval(triggerInterval) < 10 * 1000) {
+                throw new SilenceJobServerException("间隔时间不得小于10");
+            }
+        }
     }
 
-    
-    public List<SceneConfigResponseVO> getSceneConfigList(String groupName) {
+    public IPage<RetrySceneConfigResponseVO> queryPage(Page<RetrySceneConfig> pageDTO, QueryWrapper<RetrySceneConfig> queryWrapper) {
+        var retrySceneConfigPage = retrySceneConfigDao.findByQuery(queryWrapper, pageDTO, RetrySceneConfigAndRetrySceneConfigNotifyConfigRelationView.class);
+        return retrySceneConfigPage.convert(retrySceneConfigResponseVOMapper::convert);
+    }
 
-        List<RetrySceneConfig> retrySceneConfigs = retrySceneConfigDao
-                .selectList(new LambdaQueryWrapper<RetrySceneConfig>()
+    public List<RetrySceneConfigResponseVO> getSceneConfigList(String groupName) {
+
+        List<RetrySceneConfigAndRetrySceneConfigNotifyConfigRelationView> retrySceneConfigs = retrySceneConfigDao
+                .findByQuery(new LambdaQueryWrapper<RetrySceneConfig>()
                         .eq(RetrySceneConfig::getGroupName, groupName)
                         .select(RetrySceneConfig::getSceneName,
                                 RetrySceneConfig::getDescription, RetrySceneConfig::getMaxRetryCount)
-                        .orderByDesc(RetrySceneConfig::getCreatedDate));
+                        .orderByDesc(RetrySceneConfig::getCreatedDate), RetrySceneConfigAndRetrySceneConfigNotifyConfigRelationView.class);
 
-        return CollectionUtils.transformToList(retrySceneConfigs, sceneConfigResponseVOMapper::convert);
+        return CollectionUtils.transformToList(retrySceneConfigs, retrySceneConfigResponseVOMapper::convert);
     }
 
-    
     public Boolean create(RetrySceneConfig retrySceneConfig) {
 
         checkExecuteInterval(retrySceneConfig.getBackOff().getValue(), retrySceneConfig.getTriggerInterval());
@@ -122,10 +134,16 @@ public class SceneConfigService {
         // 同步配置到客户端
         SyncConfigHandler.addSyncTask(retrySceneConfig.getGroupName(), namespaceId);
 
+        if (CollectionUtils.isNotEmpty(retrySceneConfig.getNotifyRelations())) {
+            retrySceneConfig.getNotifyRelations().forEach(notifyRelation -> {
+                notifyRelation.setRetrySceneConfigId(retrySceneConfig.getId());
+            });
+            retrySceneConfigNotifyConfigRelationDao.insertBatch(retrySceneConfig.getNotifyRelations());
+        }
+
         return Boolean.TRUE;
     }
 
-    
     public Boolean update(RetrySceneConfig retrySceneConfig) {
         checkExecuteInterval(retrySceneConfig.getBackOff().getValue(), retrySceneConfig.getTriggerInterval());
         // 防止更新
@@ -149,21 +167,28 @@ public class SceneConfigService {
                     JSON.toJSONString(retrySceneConfig));
         }
 
-        var namespaceId= TenantContext.getTenantId();
+        var namespaceId = TenantContext.getTenantId();
         // 同步配置到客户端
         SyncConfigHandler.addSyncTask(retrySceneConfig.getGroupName(), namespaceId);
+
+        if (CollectionUtils.isNotEmpty(retrySceneConfig.getNotifyRelations())) {
+            retrySceneConfigNotifyConfigRelationDao.deleteByNotifyConfigId(retrySceneConfig.getId());
+            retrySceneConfig.getNotifyRelations().forEach(notifyRelation -> {
+                notifyRelation.setRetrySceneConfigId(retrySceneConfig.getId());
+            });
+            retrySceneConfigNotifyConfigRelationDao.insertBatch(retrySceneConfig.getNotifyRelations());
+        } else {
+            retrySceneConfigNotifyConfigRelationDao.deleteByNotifyConfigId(retrySceneConfig.getId());
+        }
         return Boolean.TRUE;
     }
 
-    
-    public SceneConfigResponseVO findById(BigInteger id) {
-        RetrySceneConfig retrySceneConfig = retrySceneConfigDao
-                .selectOne(new LambdaQueryWrapper<RetrySceneConfig>()
-                        .eq(RetrySceneConfig::getId, id));
-        return sceneConfigResponseVOMapper.convert(retrySceneConfig);
+    public RetrySceneConfigResponseVO findById(BigInteger id) {
+        RetrySceneConfigAndRetrySceneConfigNotifyConfigRelationView retrySceneConfig = retrySceneConfigDao.findById(id, RetrySceneConfigAndRetrySceneConfigNotifyConfigRelationView.class)
+                .orElseThrow(ResourceNotFoundException::new);
+        return retrySceneConfigResponseVOMapper.convert(retrySceneConfig);
     }
 
-    
     public boolean updateStatus(BigInteger id, Boolean status) {
 
         RetrySceneConfig config = new RetrySceneConfig();
@@ -175,13 +200,11 @@ public class SceneConfigService {
         );
     }
 
-    
     @Transactional
     public void importSceneConfig(List<SceneConfigCommand> requests) {
         batchSaveSceneConfig(requests);
     }
 
-    
     public String exportSceneConfig(ExportSceneCommand exportSceneVO) {
 
         List<SceneConfigCommand> requestList = new ArrayList<>();
@@ -199,18 +222,17 @@ public class SceneConfigService {
                             .orderByAsc(RetrySceneConfig::getId)
                     ).getRecords();
 
-            return StreamUtils.toList(sceneConfigs, SceneConfigPartitionTask::new);
+            return CollectionUtils.transformToList(sceneConfigs, SceneConfigPartitionTask::new);
         }, partitionTasks -> {
             List<SceneConfigPartitionTask> partitionTaskList = (List<SceneConfigPartitionTask>) partitionTasks;
             var sceneConfigRequestVOS = CollectionUtils.transformToList(CollectionUtils.transformToList(partitionTaskList,
-                    SceneConfigPartitionTask::getConfig), sceneConfigMapper::toSceneConfigRequestVO);
+                    SceneConfigPartitionTask::getConfig), retrySceneConfigMapper::toSceneConfigRequestVO);
             requestList.addAll(sceneConfigRequestVOS);
         }, 0);
 
         return JSON.toJSONString(requestList);
     }
 
-    
     @Transactional
     public boolean deleteByIds(Set<BigInteger> ids) {
         LambdaQueryWrapper<RetrySceneConfig> queryWrapper = new LambdaQueryWrapper<RetrySceneConfig>()
@@ -221,8 +243,8 @@ public class SceneConfigService {
         List<RetrySceneConfig> sceneConfigs = retrySceneConfigDao.selectList(queryWrapper);
         Assert.notEmpty(sceneConfigs, () -> new SilenceJobServerException("删除重试场景失败, 请检查场景状态是否关闭状态"));
 
-        Set<String> sceneNames = StreamUtils.toSet(sceneConfigs, RetrySceneConfig::getSceneName);
-        Set<String> groupNames = StreamUtils.toSet(sceneConfigs, RetrySceneConfig::getGroupName);
+        Set<String> sceneNames = CollectionUtils.transformToSet(sceneConfigs, RetrySceneConfig::getSceneName);
+        Set<String> groupNames = CollectionUtils.transformToSet(sceneConfigs, RetrySceneConfig::getGroupName);
 
         for (String groupName : groupNames) {
             List<Retry> retries = retryDao.selectPage(new PageDTO<>(1, 1),
@@ -253,7 +275,7 @@ public class SceneConfigService {
         );
 
         if (CollectionUtils.isNotEmpty(retrySummaries)) {
-            Assert.isTrue(retrySummaries.size() == retrySummaryDao.deleteBatchIds(StreamUtils.toSet(retrySummaries, RetrySummary::getId))
+            Assert.isTrue(retrySummaries.size() == retrySummaryDao.deleteBatchIds(CollectionUtils.transformToSet(retrySummaries, RetrySummary::getId))
                     , () -> new SilenceJobServerException("删除汇总表数据失败"));
         }
 
@@ -282,9 +304,9 @@ public class SceneConfigService {
                         .in(RetrySceneConfig::getSceneName, sceneNameSet));
 
         Assert.isTrue(CollectionUtils.isEmpty(sceneConfigs), () -> new SilenceJobServerException("导入失败. 原因:场景{}已存在",
-                StreamUtils.toSet(sceneConfigs, RetrySceneConfig::getSceneName)));
+                CollectionUtils.transformToSet(sceneConfigs, RetrySceneConfig::getSceneName)));
 
-        List<RetrySceneConfig> retrySceneConfigs = CollectionUtils.transformToList(requests,sceneConfigMapper::convert);
+        List<RetrySceneConfig> retrySceneConfigs = CollectionUtils.transformToList(requests, retrySceneConfigMapper::convert);
         for (RetrySceneConfig retrySceneConfig : retrySceneConfigs) {
             if (retrySceneConfig.getBackOff().getValue().intValue() == WaitStrategies.WaitStrategyEnum.DELAY_LEVEL.getValue()) {
                 retrySceneConfig.setTriggerInterval(StrUtil.EMPTY);
@@ -303,8 +325,6 @@ public class SceneConfigService {
 
     }
 
-    
-    
     private static class SceneConfigPartitionTask extends PartitionTask {
         // 这里就直接放RetrySceneConfig为了后面若加字段不需要再这里在调整了
         private final RetrySceneConfig config;
@@ -316,19 +336,6 @@ public class SceneConfigService {
 
         public RetrySceneConfig getConfig() {
             return config;
-        }
-    }
-
-    private static void checkExecuteInterval(Byte backOff, String triggerInterval) {
-        if (List.of(WaitStrategies.WaitStrategyEnum.FIXED.getValue(),
-                        WaitStrategies.WaitStrategyEnum.RANDOM.getValue()).contains(backOff.intValue())) {
-            if (Integer.parseInt(triggerInterval) < 10) {
-                throw new SilenceJobServerException("间隔时间不得小于10");
-            }
-        } else if (backOff.intValue() == WaitStrategies.WaitStrategyEnum.CRON.getValue()) {
-            if (CronUtils.getExecuteInterval(triggerInterval) < 10 * 1000) {
-                throw new SilenceJobServerException("间隔时间不得小于10");
-            }
         }
     }
 

@@ -33,8 +33,6 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.plugins.pagination.PageDTO;
 import com.google.common.collect.Lists;
 import com.old.silence.core.util.CollectionUtils;
-import com.old.silence.job.common.util.StreamUtils;
-
 
 import com.old.silence.job.server.api.assembler.GroupConfigResponseVOMapper;
 import com.old.silence.job.server.api.config.TenantContext;
@@ -202,9 +200,9 @@ public class GroupConfigService {
 
         List<Namespace> namespaces = namespaceDao.selectList(
                 new LambdaQueryWrapper<Namespace>()
-                        .in(Namespace::getUniqueId, StreamUtils.toSet(groupConfigs, GroupConfig::getNamespaceId)));
+                        .in(Namespace::getUniqueId, CollectionUtils.transformToSet(groupConfigs, GroupConfig::getNamespaceId)));
 
-        Map<String, String> namespaceMap = StreamUtils.toMap(namespaces, Namespace::getUniqueId, Namespace::getName);
+        Map<String, String> namespaceMap = CollectionUtils.transformToMap(namespaces, Namespace::getUniqueId, Namespace::getName);
 
         List<GroupConfigResponseVO> groupConfigResponses = CollectionUtils.transformToList(groupConfigs,
                 groupConfigResponseVOMapper::convert);
@@ -224,7 +222,7 @@ public class GroupConfigService {
         List<ServerNode> serverNodes = serverNodeDao.selectList(
                 new LambdaQueryWrapper<ServerNode>()
                         .eq(ServerNode::getGroupName, groupName));
-        return StreamUtils.toList(serverNodes, serverNode -> serverNode.getHostIp() + ":" + serverNode.getHostPort());
+        return CollectionUtils.transformToList(serverNodes, serverNode -> serverNode.getHostIp() + ":" + serverNode.getHostPort());
     }
 
     
@@ -261,7 +259,7 @@ public class GroupConfigService {
     @Transactional
     public void importGroup(List<GroupConfig> requestList) {
 
-        Set<String> groupSet = StreamUtils.toSet(requestList, GroupConfig::getGroupName);
+        Set<String> groupSet = CollectionUtils.transformToSet(requestList, GroupConfig::getGroupName);
         
 
         List<GroupConfig> configs = groupConfigDao.selectList(new LambdaQueryWrapper<GroupConfig>()
@@ -269,7 +267,7 @@ public class GroupConfigService {
                 .in(GroupConfig::getGroupName, groupSet));
 
         Assert.isTrue(CollectionUtils.isEmpty(configs),
-                () -> new SilenceJobServerException("导入失败. 原因: 组{}已存在", StreamUtils.toSet(configs, GroupConfig::getGroupName)));
+                () -> new SilenceJobServerException("导入失败. 原因: 组{}已存在", CollectionUtils.transformToSet(configs, GroupConfig::getGroupName)));
 
         for (GroupConfig groupConfig : requestList) {
 
@@ -298,7 +296,7 @@ public class GroupConfigService {
             return groupConfigs.stream().map(GroupConfigPartitionTask::new).collect(Collectors.toList());
         }), partitionTasks -> {
             List<GroupConfigPartitionTask> configPartitionTasks = (List<GroupConfigPartitionTask>) partitionTasks;
-            List<GroupConfig> configs = StreamUtils.toList(configPartitionTasks, GroupConfigPartitionTask::getConfig);
+            List<GroupConfig> configs = CollectionUtils.transformToList(configPartitionTasks, GroupConfigPartitionTask::getConfig);
             allRequestList.addAll(configs);
         }, 0);
 

@@ -66,7 +66,7 @@ public class NotifyRecipientResource {
     @PostMapping("/notifyRecipients")
     public Boolean create(@RequestBody @Validated NotifyRecipientCommand notifyRecipientCommand) {
         var notifyRecipient = notifyRecipientMapper.convert(notifyRecipientCommand);
-        return notifyRecipientService.saveNotifyRecipient(notifyRecipient);
+        return notifyRecipientService.create(notifyRecipient);
     }
 
     @PostMapping(value = "/notifyRecipients/import", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)

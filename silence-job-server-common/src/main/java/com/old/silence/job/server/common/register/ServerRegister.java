@@ -9,7 +9,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.old.silence.core.util.CollectionUtils;
 import com.old.silence.job.common.enums.NodeType;
 import com.old.silence.job.common.util.NetUtils;
-import com.old.silence.job.common.util.StreamUtils;
+
 import com.old.silence.job.log.SilenceJobLog;
 import com.old.silence.job.server.common.cache.CacheConsumerGroup;
 import com.old.silence.job.server.common.cache.CacheRegisterTable;
@@ -20,13 +20,16 @@ import com.old.silence.job.server.infrastructure.persistence.dao.ServerNodeDao;
 
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 /**
  * 服务端注册
@@ -98,7 +101,8 @@ public class ServerRegister extends AbstractRegister {
             // netty的client只会注册到一个服务端，若组分配的和client连接的不是一个POD则会导致当前POD没有其他客户端的注册信息
             ConcurrentMap<String /*groupName*/, Set<String>/*namespaceId*/> allConsumerGroupName = CacheConsumerGroup.getAllConsumerGroupName();
             if (CollectionUtils.isNotEmpty(allConsumerGroupName)) {
-                Set<String> namespaceIdSets = StreamUtils.toSetByFlatMap(allConsumerGroupName.values(), Set::stream);
+                Set<String> namespaceIdSets = allConsumerGroupName.values().stream().filter(Objects::nonNull)
+                        .flatMap(Set::stream).filter(Objects::nonNull).collect(Collectors.toSet());
                 if (CollectionUtils.isEmpty(namespaceIdSets)) {
                     return;
                 }

@@ -12,7 +12,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.old.silence.data.commons.converter.QueryWrapperConverter;
 import com.old.silence.job.server.domain.model.JobTaskBatch;
 import com.old.silence.job.server.domain.service.JobBatchService;
-import com.old.silence.job.server.dto.JobBatchQuery;
+import com.old.silence.job.server.dto.JobTaskBatchQuery;
 import com.old.silence.job.server.vo.JobTaskBatchResponseVO;
 
 import java.math.BigInteger;
@@ -29,14 +29,14 @@ public class JobTaskBatchResource {
     }
 
     @GetMapping(value = "/jobBatches", params = {"pageNo","pageSize"})
-    public IPage<JobTaskBatchResponseVO> queryPage(Page<JobTaskBatch> page, JobBatchQuery jobQueryVO) {
+    public IPage<JobTaskBatchResponseVO> queryPage(Page<JobTaskBatch> page, JobTaskBatchQuery jobQueryVO) {
         var queryWrapper = QueryWrapperConverter.convert(jobQueryVO, JobTaskBatch.class);
         return jobBatchService.queryPage(page, queryWrapper);
     }
 
     @GetMapping("/jobBatches/{id}")
-    public JobTaskBatchResponseVO getJobBatchDetail(@PathVariable BigInteger id) {
-        return jobBatchService.getJobBatchDetail(id);
+    public JobTaskBatchResponseVO findById(@PathVariable BigInteger id) {
+        return jobBatchService.findById(id);
     }
 
     @PutMapping("/jobBatches/{taskBatchId}/stop")

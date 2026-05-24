@@ -7,7 +7,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.old.silence.core.util.CollectionUtils;
 import com.old.silence.job.common.enums.IdGeneratorMode;
-import com.old.silence.job.common.util.StreamUtils;
+
 import com.old.silence.job.log.SilenceJobLog;
 import com.old.silence.job.server.common.Lifecycle;
 import com.old.silence.job.server.common.util.DateUtils;
@@ -106,7 +106,7 @@ public class SegmentIdGenerator implements IdGenerator, Lifecycle {
                 return;
             }
 
-            List<Pair<String, String>> dbTags = StreamUtils.toList(sequenceAllocs,
+            List<Pair<String, String>> dbTags = CollectionUtils.transformToList(sequenceAllocs,
                     sequenceAlloc -> Pair.of(sequenceAlloc.getGroupName(), sequenceAlloc.getNamespaceId()));
 
             List<Pair<String, String>> cacheTags = new ArrayList<>(cache.keySet());

@@ -7,5 +7,6 @@ import com.old.silence.job.server.domain.model.JobExecutor;
 /**
  * @author moryzang
  */
+@Mapper
 public interface JobExecutorDao extends BaseMapper<JobExecutor> {
 }

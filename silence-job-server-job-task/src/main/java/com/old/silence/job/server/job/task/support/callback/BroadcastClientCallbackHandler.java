@@ -9,7 +9,7 @@ import com.google.common.collect.Sets;
 import com.old.silence.core.util.CollectionUtils;
 import com.old.silence.job.common.enums.JobTaskType;
 import com.old.silence.job.server.common.pekko.ActorGenerator;
-import com.old.silence.job.common.util.StreamUtils;
+
 import com.old.silence.job.server.common.cache.CacheRegisterTable;
 import com.old.silence.job.server.common.dto.RegisterNodeInfo;
 import com.old.silence.job.server.common.util.ClientInfoUtils;
@@ -72,8 +72,8 @@ public class BroadcastClientCallbackHandler extends AbstractClientCallbackHandle
             List<JobTask> jobTasks = super.jobTaskDao.selectList(new LambdaQueryWrapper<JobTask>()
                     .eq(JobTask::getTaskBatchId, context.getTaskBatchId()));
 
-            Set<String> clientIdList = StreamUtils.toSet(jobTasks, jobTask1 -> ClientInfoUtils.clientId(jobTask1.getClientInfo()));
-            Set<String> remoteClientIdSet = StreamUtils.toSet(nodes, RegisterNodeInfo::getHostId);
+            Set<String> clientIdList = CollectionUtils.transformToSet(jobTasks, jobTask1 -> ClientInfoUtils.clientId(jobTask1.getClientInfo()));
+            Set<String> remoteClientIdSet = CollectionUtils.transformToSet(nodes, RegisterNodeInfo::getHostId);
             Sets.SetView<String> diff = Sets.difference(remoteClientIdSet, clientIdList);
 
             String newClientId = CollectionUtils.firstElement(new ArrayList<>(diff)).orElseThrow();

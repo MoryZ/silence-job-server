@@ -10,8 +10,6 @@ import jakarta.validation.constraints.Pattern;
 import java.math.BigInteger;
 import java.util.Set;
 
-
-
 public class NotifyConfigCommand {
 
     private BigInteger id;
@@ -32,9 +30,6 @@ public class NotifyConfigCommand {
     @NotNull(message = "通知告警场景名不能为空")
     private String notifyName;
 
-    @NotEmpty(message = "通知人列表")
-    private Set<Long> recipientIds;
-
     private Integer notifyThreshold;
 
     @NotNull(message = "通知场景不能为空")
@@ -53,6 +48,9 @@ public class NotifyConfigCommand {
      * 是否删除
      */
     private Boolean isDeleted;
+
+    @NotEmpty(message = "通知人列表")
+    private Set<BigInteger> recipientIds;
 
     public BigInteger getId() {
         return id;
@@ -92,14 +90,6 @@ public class NotifyConfigCommand {
 
     public void setNotifyName(String notifyName) {
         this.notifyName = notifyName;
-    }
-
-    public Set<Long> getRecipientIds() {
-        return recipientIds;
-    }
-
-    public void setRecipientIds(Set<Long> recipientIds) {
-        this.recipientIds = recipientIds;
     }
 
     public Integer getNotifyThreshold() {
@@ -148,5 +138,13 @@ public class NotifyConfigCommand {
 
     public void setDeleted(Boolean deleted) {
         isDeleted = deleted;
+    }
+
+    public Set<BigInteger> getRecipientIds() {
+        return recipientIds;
+    }
+
+    public void setRecipientIds(Set<BigInteger> recipientIds) {
+        this.recipientIds = recipientIds;
     }
 }

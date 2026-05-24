@@ -18,13 +18,11 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.plugins.pagination.PageDTO;
 import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.old.silence.job.common.util.StreamUtils;
 import com.old.silence.job.server.api.assembler.NotifyRecipientMapper;
 import com.old.silence.job.server.common.dto.PartitionTask;
 import com.old.silence.job.server.common.util.PartitionTaskUtils;
 import com.old.silence.job.server.domain.model.NotifyRecipient;
 import com.old.silence.job.server.dto.ExportNotifyRecipientCommand;
-import com.old.silence.job.server.dto.NotifyRecipientQuery;
 import com.old.silence.job.server.infrastructure.persistence.dao.NotifyRecipientDao;
 import com.old.silence.job.server.vo.CommonLabelValueResponseVO;
 import com.old.silence.job.server.vo.NotifyRecipientResponseVO;
@@ -50,7 +48,7 @@ public class NotifyRecipientService {
         return notifyRecipientPage.convert(notifyRecipientMapper::convert);
     }
 
-    public Boolean saveNotifyRecipient(NotifyRecipient notifyRecipient) {
+    public Boolean create(NotifyRecipient notifyRecipient) {
         notifyRecipient.setId(null);
         return 1 == notifyRecipientDao.insert(notifyRecipient);
     }
@@ -76,7 +74,7 @@ public class NotifyRecipientService {
     @Transactional
     public void importNotifyRecipient(List<NotifyRecipient> notifyRecipientRequestVOS) {
         for (NotifyRecipient notifyRecipient : notifyRecipientRequestVOS) {
-            this.saveNotifyRecipient(notifyRecipient);
+            this.create(notifyRecipient);
         }
     }
 
@@ -94,7 +92,7 @@ public class NotifyRecipientService {
                             .in(CollectionUtils.isNotEmpty(exportNotifyRecipientCommand.getNotifyRecipientIds()), NotifyRecipient::getId,
                                     exportNotifyRecipientCommand.getNotifyRecipientIds())
                             .orderByAsc(NotifyRecipient::getId)).getRecords();
-            return StreamUtils.toList(recipients, NotifyRecipientPartitionTask::new);
+            return CollectionUtils.transformToList(recipients, NotifyRecipientPartitionTask::new);
         }, partitionTasks -> {
             List<NotifyRecipientPartitionTask> partitionTaskList = (List<NotifyRecipientPartitionTask>) partitionTasks;
             List<NotifyRecipient> notifyRecipientRequestVOs = CollectionUtils.transformToList(partitionTaskList, NotifyRecipientPartitionTask::getRecipient);

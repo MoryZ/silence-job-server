@@ -21,7 +21,6 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.old.silence.core.util.CollectionUtils;
 import com.old.silence.job.common.enums.RetryStatus;
 import com.old.silence.job.common.enums.SystemTaskType;
-import com.old.silence.job.common.util.StreamUtils;
 import com.old.silence.job.server.api.assembler.RetryDeadLetterResponseVOMapper;
 import com.old.silence.job.server.common.WaitStrategy;
 import com.old.silence.job.server.common.config.SystemProperties;
@@ -124,7 +123,7 @@ public class RetryDeadLetterService {
         Assert.isTrue(waitRollbackList.size() == retryDao.insertBatch(waitRollbackList),
                 () -> new SilenceJobServerException("新增重试任务失败"));
 
-        Set<BigInteger> waitDelRetryDeadLetterIdSet = StreamUtils.toSet(retryDeadLetterList, RetryDeadLetter::getId);
+        Set<BigInteger> waitDelRetryDeadLetterIdSet = CollectionUtils.transformToSet(retryDeadLetterList, RetryDeadLetter::getId);
         Assert.isTrue(waitDelRetryDeadLetterIdSet.size() == retryDeadLetterDao.delete(
                         new LambdaQueryWrapper<RetryDeadLetter>()
                                 .in(RetryDeadLetter::getId, waitDelRetryDeadLetterIdSet)),

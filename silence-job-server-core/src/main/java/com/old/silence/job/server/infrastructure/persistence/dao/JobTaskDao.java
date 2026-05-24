@@ -13,6 +13,7 @@ import java.util.List;
  * </p>
  *
  */
+@Mapper
 public interface JobTaskDao extends BaseMapper<JobTask> {
 
     int insertBatch(@Param("list") List<JobTask> list);

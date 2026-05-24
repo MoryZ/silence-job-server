@@ -5,7 +5,6 @@ import org.springframework.context.ApplicationEvent;
 import com.alibaba.fastjson2.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.old.silence.core.util.CollectionUtils;
-import com.old.silence.job.common.util.StreamUtils;
 import com.old.silence.job.server.common.convert.AlarmInfoConverter;
 import com.old.silence.job.server.common.dto.WorkflowAlarmInfo;
 import com.old.silence.job.server.domain.model.WorkflowTaskBatch;
@@ -36,7 +35,7 @@ public abstract class AbstractWorkflowAlarm<E extends ApplicationEvent> extends 
         Map<BigInteger, List<WorkflowAlarmInfo>> workflowAlarmInfoMap = new HashMap<>();
         workflowAlarmInfoList.forEach(i -> notifyScene.add(Integer.valueOf(i.getNotifyScene().getValue())));
 
-        Map<BigInteger, WorkflowAlarmInfo> workflowAlarmInfoGroupMap = StreamUtils.toIdentityMap(workflowAlarmInfoList, WorkflowAlarmInfo::getId);
+        Map<BigInteger, WorkflowAlarmInfo> workflowAlarmInfoGroupMap = CollectionUtils.transformToMap(workflowAlarmInfoList, WorkflowAlarmInfo::getId);
         // 查询数据库
         List<WorkflowBatchResponseDO> workflowBatchResponseDOList = workflowTaskBatchDao.selectWorkflowBatchList(
                 new QueryWrapper<WorkflowTaskBatch>()

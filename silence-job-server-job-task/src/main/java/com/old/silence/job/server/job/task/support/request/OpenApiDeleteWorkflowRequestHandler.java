@@ -12,7 +12,7 @@ import com.old.silence.job.common.constant.SystemConstants.HTTP_PATH;
 import com.old.silence.job.common.enums.SystemTaskType;
 import com.old.silence.job.common.model.SilenceJobRequest;
 import com.old.silence.job.common.model.SilenceJobRpcResult;
-import com.old.silence.job.common.util.StreamUtils;
+
 import com.old.silence.job.log.SilenceJobLog;
 import com.old.silence.job.server.common.handler.PostHttpRequestHandler;
 import com.old.silence.job.server.common.util.HttpHeaderUtil;
@@ -73,7 +73,7 @@ public class OpenApiDeleteWorkflowRequestHandler extends PostHttpRequestHandler 
         );
         if (CollectionUtils.isNotEmpty(jobSummaries)) {
             Assert.isTrue(jobSummaries.size() ==
-                            jobSummaryDao.deleteBatchIds(StreamUtils.toSet(jobSummaries, JobSummary::getId)),
+                            jobSummaryDao.deleteBatchIds(CollectionUtils.transformToSet(jobSummaries, JobSummary::getId)),
                     () -> new SilenceJobServerException("汇总表删除失败")
             );
         }

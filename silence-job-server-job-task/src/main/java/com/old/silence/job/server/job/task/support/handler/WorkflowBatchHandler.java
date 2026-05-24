@@ -26,7 +26,7 @@ import com.old.silence.job.common.enums.JobNotifyScene;
 import com.old.silence.job.common.enums.JobOperationReason;
 import com.old.silence.job.common.enums.JobTaskBatchStatus;
 import com.old.silence.job.common.enums.JobTaskExecutorScene;
-import com.old.silence.job.common.util.StreamUtils;
+
 import com.old.silence.job.log.SilenceJobLog;
 import com.old.silence.job.server.common.util.DateUtils;
 import com.old.silence.job.server.domain.model.Job;
@@ -53,6 +53,7 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.text.MessageFormat;
 import java.time.Duration;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -87,12 +88,12 @@ public class WorkflowBatchHandler {
     }
 
     private static boolean checkLeafCompleted(MutableGraph<BigInteger> graph, Map<BigInteger,
-            List<JobTaskBatch>> currentWorkflowNodeMap, Set<BigInteger> parentIds) {
+            Collection<JobTaskBatch>> currentWorkflowNodeMap, Set<BigInteger> parentIds) {
 
         // 判定子节点是否需要处理
         boolean isNeedProcess = true;
         for (BigInteger nodeId : parentIds) {
-            List<JobTaskBatch> jobTaskBatchList = currentWorkflowNodeMap.get(nodeId);
+            Collection<JobTaskBatch> jobTaskBatchList = currentWorkflowNodeMap.get(nodeId);
             if (CollectionUtils.isEmpty(jobTaskBatchList)) {
                 // 递归查询有执行过的任务批次
                 isNeedProcess = isNeedProcess || checkLeafCompleted(graph, currentWorkflowNodeMap, graph.predecessors(nodeId));
@@ -151,7 +152,7 @@ public class WorkflowBatchHandler {
             return false;
         }
 
-        Map<BigInteger, List<JobTaskBatch>> currentWorkflowNodeMap = StreamUtils.groupByKey(jobTaskBatches,
+        Map<BigInteger, Collection<JobTaskBatch>> currentWorkflowNodeMap = CollectionUtils.groupingBy(jobTaskBatches,
                 JobTaskBatch::getWorkflowNodeId);
 
         // 判定最后的工作流批次状态
@@ -161,7 +162,7 @@ public class WorkflowBatchHandler {
         // 判定所有的叶子节点是否完成
         List<BigInteger> leaves = MutableGraphCache.getLeaves(workflowTaskBatchId, flowInfo);
         for (BigInteger leaf : leaves) {
-            List<JobTaskBatch> jobTaskBatchList = currentWorkflowNodeMap.getOrDefault(leaf, Lists.newArrayList());
+            Collection<JobTaskBatch> jobTaskBatchList = currentWorkflowNodeMap.getOrDefault(leaf, Lists.newArrayList());
             if (CollectionUtils.isEmpty(jobTaskBatchList)) {
                 boolean isNeedProcess = checkLeafCompleted(graph, currentWorkflowNodeMap, graph.predecessors(leaf));
                 // 说明当前叶子节点需要处理，但是未处理返回false
@@ -244,9 +245,9 @@ public class WorkflowBatchHandler {
             return;
         }
 
-        List<Job> jobs = jobDao.selectBatchIds(StreamUtils.toSet(jobTaskBatches, JobTaskBatch::getJobId));
+        List<Job> jobs = jobDao.selectBatchIds(CollectionUtils.transformToSet(jobTaskBatches, JobTaskBatch::getJobId));
 
-        Map<BigInteger, Job> jobMap = StreamUtils.toIdentityMap(jobs, Job::getId);
+        Map<BigInteger, Job> jobMap = CollectionUtils.transformToMap(jobs, Job::getId);
         for (JobTaskBatch jobTaskBatch : jobTaskBatches) {
 
             Job job = jobMap.get(jobTaskBatch.getJobId());
@@ -288,7 +289,7 @@ public class WorkflowBatchHandler {
                 .in(JobTaskBatch::getWorkflowNodeId, graph.nodes()).orderByDesc(JobTaskBatch::getId)
         );
 
-        Map<BigInteger, JobTaskBatch> jobTaskBatchMap = StreamUtils.toIdentityMap(jobTaskBatches, JobTaskBatch::getWorkflowNodeId);
+        Map<BigInteger, JobTaskBatch> jobTaskBatchMap = CollectionUtils.transformToMap(jobTaskBatches, JobTaskBatch::getWorkflowNodeId);
 
         recoveryWorkflowExecutor(SystemConstants.ROOT, workflowTaskBatchId, graph, jobTaskBatchMap);
     }

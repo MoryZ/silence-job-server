@@ -1,8 +1,6 @@
 package com.old.silence.job.server.domain.service;
 
 import java.math.BigInteger;
-import java.util.List;
-import java.util.Objects;
 import java.util.Set;
 
 import org.springframework.stereotype.Service;
@@ -11,38 +9,32 @@ import com.alibaba.fastjson2.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.old.silence.core.util.CollectionUtils;
 import com.old.silence.job.common.constant.SystemConstants;
 import com.old.silence.job.common.enums.SystemTaskType;
 import com.old.silence.job.server.api.assembler.JobBatchResponseVOConverter;
-import com.old.silence.job.server.domain.model.Job;
 import com.old.silence.job.server.domain.model.JobTaskBatch;
 import com.old.silence.job.server.domain.model.WorkflowNode;
 import com.old.silence.job.server.dto.CallbackConfig;
 import com.old.silence.job.server.dto.DecisionConfig;
 import com.old.silence.job.server.handler.JobHandler;
-import com.old.silence.job.server.infrastructure.persistence.dao.JobDao;
 import com.old.silence.job.server.infrastructure.persistence.dao.JobTaskBatchDao;
 import com.old.silence.job.server.infrastructure.persistence.dao.WorkflowNodeDao;
-import com.old.silence.job.server.vo.JobBatchResponseDO;
+import com.old.silence.job.server.vo.JobTaskBatchAndJobView;
 import com.old.silence.job.server.vo.JobTaskBatchResponseVO;
-import com.old.silence.page.PageImpl;
 
 
 @Service
 public class JobBatchService {
 
     private final JobTaskBatchDao jobTaskBatchDao;
-    private final JobDao jobDao;
     private final WorkflowNodeDao workflowNodeDao;
     private final JobHandler jobHandler;
     private final JobBatchResponseVOConverter jobBatchResponseVOConverter;
 
-    public JobBatchService(JobTaskBatchDao jobTaskBatchDao, JobDao jobDao,
+    public JobBatchService(JobTaskBatchDao jobTaskBatchDao,
                            WorkflowNodeDao workflowNodeDao, JobHandler jobHandler,
                            JobBatchResponseVOConverter jobBatchResponseVOConverter) {
         this.jobTaskBatchDao = jobTaskBatchDao;
-        this.jobDao = jobDao;
         this.workflowNodeDao = workflowNodeDao;
         this.jobHandler = jobHandler;
         this.jobBatchResponseVOConverter = jobBatchResponseVOConverter;
@@ -50,20 +42,17 @@ public class JobBatchService {
 
 
     public IPage<JobTaskBatchResponseVO> queryPage(Page<JobTaskBatch> page, QueryWrapper<JobTaskBatch> queryWrapper) {
-        return jobTaskBatchDao.selectPage(page, queryWrapper).convert(jobBatchResponseVOConverter::convert);
+        var resultPage = jobTaskBatchDao.findByQuery(queryWrapper, page, JobTaskBatchAndJobView.class);
+        return resultPage.convert(jobBatchResponseVOConverter::convert);
     }
 
 
-    public JobTaskBatchResponseVO getJobBatchDetail(BigInteger id) {
-        JobTaskBatch jobTaskBatch = jobTaskBatchDao.selectById(id);
-        if (Objects.isNull(jobTaskBatch)) {
-            return null;
-        }
+    public JobTaskBatchResponseVO findById(BigInteger id) {
+        JobTaskBatchAndJobView jobTaskBatch = jobTaskBatchDao.findById(id, JobTaskBatchAndJobView.class).orElse(null);
 
-        Job job = jobDao.selectById(jobTaskBatch.getJobId());
-        JobTaskBatchResponseVO jobTaskBatchResponseVO = jobBatchResponseVOConverter.convert(jobTaskBatch, job);
+        JobTaskBatchResponseVO jobTaskBatchResponseVO = jobBatchResponseVOConverter.convert(jobTaskBatch);
 
-        if (jobTaskBatch.getSystemTaskType().equals(SystemTaskType.WORKFLOW)) {
+        if (SystemTaskType.WORKFLOW.equals(jobTaskBatch.getSystemTaskType())) {
             WorkflowNode workflowNode = workflowNodeDao.selectById(jobTaskBatch.getWorkflowNodeId());
             jobTaskBatchResponseVO.setNodeName(workflowNode.getNodeName());
 

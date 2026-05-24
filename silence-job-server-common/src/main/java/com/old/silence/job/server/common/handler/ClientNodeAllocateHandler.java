@@ -2,7 +2,7 @@ package com.old.silence.job.server.common.handler;
 
 import org.springframework.stereotype.Component;
 import com.old.silence.core.util.CollectionUtils;
-import com.old.silence.job.common.util.StreamUtils;
+
 import com.old.silence.job.log.SilenceJobLog;
 import com.old.silence.job.server.common.ClientLoadBalance;
 import com.old.silence.job.server.common.allocate.client.ClientLoadBalanceManager;
@@ -34,7 +34,7 @@ public class ClientNodeAllocateHandler {
 
         ClientLoadBalance clientLoadBalanceRandom = ClientLoadBalanceManager.getClientLoadBalance(routeKey);
 
-        String hostId = clientLoadBalanceRandom.route(allocKey, new TreeSet<>(StreamUtils.toSet(serverNodes, RegisterNodeInfo::getHostId)));
+        String hostId = clientLoadBalanceRandom.route(allocKey, new TreeSet<>(CollectionUtils.transformToSet(serverNodes, RegisterNodeInfo::getHostId)));
 
         Stream<RegisterNodeInfo> registerNodeInfoStream = serverNodes.stream()
                 .filter(s -> s.getHostId().equals(hostId));

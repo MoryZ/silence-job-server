@@ -2,14 +2,14 @@ package com.old.silence.job.server.infrastructure.persistence.dao;
 
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Update;
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.old.silence.data.mybatis.projection.ProjectionMapperRepository;
 import com.old.silence.job.server.domain.model.Job;
 
 import java.math.BigInteger;
 import java.util.List;
 
 
-public interface JobDao extends BaseMapper<Job> {
+public interface JobDao extends ProjectionMapperRepository<Job, BigInteger> {
 
     int updateBatchNextTriggerAtById(@Param("list") List<Job> list);
 

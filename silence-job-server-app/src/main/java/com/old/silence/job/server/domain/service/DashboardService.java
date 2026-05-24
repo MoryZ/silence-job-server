@@ -2,6 +2,7 @@ package com.old.silence.job.server.domain.service;
 
 import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.util.StrUtil;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -11,7 +12,6 @@ import com.old.silence.core.util.CollectionUtils;
 import com.old.silence.job.common.enums.NodeType;
 import com.old.silence.job.common.enums.SystemModeEnum;
 import com.old.silence.job.common.enums.SystemTaskType;
-import com.old.silence.job.common.util.StreamUtils;
 import com.old.silence.job.server.api.assembler.DashboardLineResponseVOMapper;
 import com.old.silence.job.server.api.assembler.JobSummaryResponseVOMapper;
 import com.old.silence.job.server.api.assembler.RetrySummaryResponseVOMapper;
@@ -134,7 +134,7 @@ public class DashboardService {
 
         // 在线Pods
         List<ActivePodQuantityResponseDO> activePodQuantityDO = serverNodeDao.selectActivePodCount(List.of(TenantContext.getTenantId(), ServerRegister.NAMESPACE_ID));
-        Map<NodeType, Long> map = StreamUtils.toMap(activePodQuantityDO,
+        Map<NodeType, Long> map = CollectionUtils.transformToMap(activePodQuantityDO,
                 ActivePodQuantityResponseDO::getNodeType, ActivePodQuantityResponseDO::getTotal);
         Long clientTotal = map.getOrDefault(NodeType.CLIENT, 0L);
         Long serverTotal = map.getOrDefault(NodeType.SERVER, 0L);
@@ -191,14 +191,12 @@ public class DashboardService {
 
 
     public DashboardRetryLineResponseVO jobLineList(Page<Object> pager, JobLineQueryVo queryVO) {
-        // 查询登录用户权限
-        List<String> groupNames = List.of();
         DashboardRetryLineResponseVO responseVO = new DashboardRetryLineResponseVO();
-
+        List<String> groupNames = StringUtils.isNotEmpty(queryVO.getGroupName()) ? List.of() : List.of(queryVO.getGroupName());
         // 任务类型
         SystemTaskType systemTaskType = SystemModeEnum.JOB.equals(queryVO.getMode()) ? SystemTaskType.JOB : SystemTaskType.WORKFLOW;
         LambdaQueryWrapper<Job> wrapper = new LambdaQueryWrapper<Job>()
-                .in(CollectionUtils.isNotEmpty(groupNames), Job::getGroupName, groupNames);
+                .in(StringUtils.isNotEmpty(queryVO.getGroupName()), Job::getGroupName, groupNames);
 
         // 针对 Group By 分页自定义 countStatement
         pager.setSearchCount(false);

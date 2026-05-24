@@ -7,6 +7,7 @@ import cn.hutool.core.util.StrUtil;
 import java.math.BigInteger;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -38,7 +39,6 @@ import com.old.silence.job.common.enums.TaskGeneratorSceneEnum;
 import com.old.silence.job.common.enums.SystemTaskType;
 import com.old.silence.job.common.model.ApiResult;
 import com.old.silence.job.common.server.dto.RetryTaskDTO;
-import com.old.silence.job.common.util.StreamUtils;
 import com.old.silence.job.log.SilenceJobLog;
 import com.old.silence.job.server.api.assembler.RetryMapper;
 import com.old.silence.job.server.api.assembler.RetryTaskResponseVOMapper;
@@ -125,7 +125,7 @@ public class RetryService {
         if (CollectionUtils.isNotEmpty(ids)) {
             List<Retry> callbackTaskList = retryDao
                     .selectList(new LambdaQueryWrapper<Retry>().in(Retry::getParentId, ids));
-           callbackMap = StreamUtils.toIdentityMap(callbackTaskList, Retry::getParentId);
+           callbackMap = CollectionUtils.transformToMap(callbackTaskList, Retry::getParentId);
         }
 
         Map<BigInteger, Retry> finalCallbackMap = callbackMap;
@@ -282,7 +282,7 @@ public class RetryService {
         Assert.notEmpty(retries,
                 () -> new SilenceJobServerException("没有可删除的数据, 只有非【处理中】的数据可以删除"));
 
-        Set<BigInteger> retryIds = StreamUtils.toSet(retries, Retry::getId);
+        Set<BigInteger> retryIds = CollectionUtils.transformToSet(retries, Retry::getId);
         retryTaskDao.delete(new LambdaQueryWrapper<RetryTask>()
                 .eq(RetryTask::getGroupName, requestVO.getGroupName())
                 .in(RetryTask::getRetryId, retryIds));
@@ -339,7 +339,7 @@ public class RetryService {
                 .allMatch(retryTaskDTO -> retryTaskDTO.getGroupName().equals(parseLogsVO.getGroupName()));
         Assert.isTrue(allMatch, () -> new SilenceJobServerException("存在数据groupName不匹配，请检查您的数据"));
 
-        Map<String, List<RetryTaskDTO>> map = StreamUtils.groupByKey(waitInsertList, RetryTaskDTO::getSceneName);
+        Map<String, Collection<RetryTaskDTO>> map = CollectionUtils.groupingBy(waitInsertList, RetryTaskDTO::getSceneName);
 
 
         transactionTemplate.execute((status -> {

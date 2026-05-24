@@ -14,7 +14,7 @@ import com.old.silence.job.common.constant.SystemConstants;
 import com.old.silence.job.common.enums.RetryStatus;
 import com.old.silence.job.common.enums.RetryTaskExecutorSceneEnum;
 import com.old.silence.job.common.enums.SystemTaskType;
-import com.old.silence.job.common.util.StreamUtils;
+
 import com.old.silence.job.log.SilenceJobLog;
 import com.old.silence.job.server.common.WaitStrategy;
 import com.old.silence.job.server.common.config.SystemProperties;
@@ -147,7 +147,7 @@ public class ScanRetryActor extends AbstractActor {
      * @return <SceneName, RetrySceneConfig>
      */
     private Map<String, RetrySceneConfig> getSceneConfigMap(List<? extends PartitionTask> partitionTasks) {
-        Set<String> sceneNameSet = StreamUtils.toSet(partitionTasks,
+        Set<String> sceneNameSet = CollectionUtils.transformToSet(partitionTasks,
                 partitionTask -> ((RetryPartitionTask) partitionTask).getSceneName());
         List<RetrySceneConfig> retrySceneConfigs = retrySceneConfigDao
                 .selectList(new LambdaQueryWrapper<RetrySceneConfig>()
@@ -157,7 +157,7 @@ public class ScanRetryActor extends AbstractActor {
                                 RetrySceneConfig::getExecutorTimeout)
                         .eq(RetrySceneConfig::getSceneStatus, true)
                         .in(RetrySceneConfig::getSceneName, sceneNameSet));
-        return StreamUtils.toIdentityMap(retrySceneConfigs, RetrySceneConfig::getSceneName);
+        return CollectionUtils.transformToMap(retrySceneConfigs, RetrySceneConfig::getSceneName);
     }
 
     private void processRetry(RetryPartitionTask partitionTask, RetrySceneConfig retrySceneConfig, List<RetryTaskPrepareDTO> waitExecRetries, List<Retry> waitUpdateRetries) {
@@ -216,10 +216,10 @@ public class ScanRetryActor extends AbstractActor {
 
         // 过滤已关闭的组
         if (CollectionUtils.isNotEmpty(retries)) {
-            List<String> groupConfigs = StreamUtils.toList(groupConfigDao.selectList(new LambdaQueryWrapper<GroupConfig>()
+            List<String> groupConfigs = CollectionUtils.transformToList(groupConfigDao.selectList(new LambdaQueryWrapper<GroupConfig>()
                             .select(GroupConfig::getGroupName)
                             .eq(GroupConfig::getGroupStatus, true)
-                            .in(GroupConfig::getGroupName, StreamUtils.toSet(retries, Retry::getGroupName))),
+                            .in(GroupConfig::getGroupName, CollectionUtils.transformToSet(retries, Retry::getGroupName))),
                     GroupConfig::getGroupName);
             retries = retries.stream().filter(retry -> groupConfigs.contains(retry.getGroupName())).collect(Collectors.toList());
         }

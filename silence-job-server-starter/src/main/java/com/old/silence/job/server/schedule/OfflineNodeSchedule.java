@@ -3,7 +3,6 @@ package com.old.silence.job.server.schedule;
 import org.springframework.stereotype.Component;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.old.silence.core.util.CollectionUtils;
-import com.old.silence.job.common.util.StreamUtils;
 import com.old.silence.job.log.SilenceJobLog;
 import com.old.silence.job.server.common.Lifecycle;
 import com.old.silence.job.server.common.cache.CacheRegisterTable;
@@ -45,13 +44,13 @@ public class OfflineNodeSchedule extends AbstractSchedule implements Lifecycle {
                             .le(ServerNode::getExpireAt, endTime));
             if (CollectionUtils.isNotEmpty(serverNodes)) {
                 // 先删除DB中需要下线的机器
-                serverNodeDao.deleteBatchIds(StreamUtils.toSet(serverNodes, ServerNode::getId));
+                serverNodeDao.deleteBatchIds(CollectionUtils.transformToSet(serverNodes, ServerNode::getId));
             }
 
             Set<RegisterNodeInfo> allPods = CacheRegisterTable.getAllPods();
             Set<RegisterNodeInfo> waitOffline = allPods.stream().filter(registerNodeInfo -> registerNodeInfo.getExpireAt().isBefore(endTime)).collect(
                     Collectors.toSet());
-            Set<String> podIds = StreamUtils.toSet(waitOffline, RegisterNodeInfo::getHostId);
+            Set<String> podIds = CollectionUtils.transformToSet(waitOffline, RegisterNodeInfo::getHostId);
             if (CollectionUtils.isEmpty(podIds)) {
                 return;
             }

@@ -4,14 +4,13 @@ package com.old.silence.job.server.vo;
 import com.old.silence.job.common.enums.BackoffType;
 import com.old.silence.job.common.enums.CbTriggerType;
 import com.old.silence.job.common.enums.JobBlockStrategy;
-import com.old.silence.job.common.enums.TriggerType;
 
 import java.math.BigInteger;
 import java.time.Instant;
 import java.util.Set;
 
 
-public class SceneConfigResponseVO {
+public class RetrySceneConfigResponseVO {
 
     private BigInteger id;
 

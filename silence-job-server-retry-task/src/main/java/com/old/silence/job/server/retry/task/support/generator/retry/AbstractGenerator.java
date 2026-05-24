@@ -13,11 +13,9 @@ import com.old.silence.job.common.enums.BackoffType;
 import com.old.silence.job.common.enums.DelayLevelEnum;
 import com.old.silence.job.common.enums.RetryStatus;
 import com.old.silence.job.common.enums.SystemTaskType;
-import com.old.silence.job.common.util.StreamUtils;
 import com.old.silence.job.log.SilenceJobLog;
 import com.old.silence.job.server.common.WaitStrategy;
 import com.old.silence.job.server.common.config.SystemProperties;
-import com.old.silence.job.server.common.strategy.WaitStrategies;
 import com.old.silence.job.server.common.strategy.WaitStrategies.WaitStrategyContext;
 import com.old.silence.job.server.common.strategy.WaitStrategies.WaitStrategyEnum;
 import com.old.silence.job.server.domain.model.GroupConfig;
@@ -34,6 +32,7 @@ import com.old.silence.job.server.retry.task.support.RetryTaskLogConverter;
 import java.math.BigInteger;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -70,7 +69,7 @@ public abstract class AbstractGenerator implements TaskGenerator {
                 Collectors.toCollection(() -> new TreeSet<>(Comparator.comparing(TaskContext.TaskInfo::getIdempotentId))),
                 ArrayList::new));
 
-        Set<String> idempotentIdSet = StreamUtils.toSet(taskInfos, TaskContext.TaskInfo::getIdempotentId);
+        Set<String> idempotentIdSet = CollectionUtils.transformToSet(taskInfos, TaskContext.TaskInfo::getIdempotentId);
 
         // 获取相关的任务，用户幂等校验
         List<Retry> retries = retryDao.selectList(new LambdaQueryWrapper<Retry>()
@@ -81,7 +80,7 @@ public abstract class AbstractGenerator implements TaskGenerator {
                         .eq(Retry::getTaskType, SystemTaskType.RETRY)
                         .in(Retry::getIdempotentId, idempotentIdSet));
 
-        Map<String/*幂等ID*/, List<Retry>> retryTaskMap = StreamUtils.groupByKey(retries, Retry::getIdempotentId);
+        Map<String/*幂等ID*/, Collection<Retry>> retryTaskMap = CollectionUtils.groupingBy(retries, Retry::getIdempotentId);
 
         List<Retry> waitInsertTasks = new ArrayList<>();
         Instant now = Instant.now();
@@ -100,7 +99,7 @@ public abstract class AbstractGenerator implements TaskGenerator {
                 () -> new SilenceJobServerException("failed to report data"));
     }
 
-    private Pair<List<Retry>, List<RetryTask>> doConvertTask(Map<String/*幂等ID*/, List<Retry>> retryTaskMap,
+    private Pair<List<Retry>, List<RetryTask>> doConvertTask(Map<String/*幂等ID*/, Collection<Retry>> retryTaskMap,
                                                              TaskContext taskContext, Instant now,
                                                              TaskContext.TaskInfo taskInfo, RetrySceneConfig retrySceneConfig) {
         List<Retry> waitInsertRetryList = new ArrayList<>();

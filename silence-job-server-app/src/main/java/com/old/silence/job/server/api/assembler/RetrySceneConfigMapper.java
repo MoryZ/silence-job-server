@@ -15,7 +15,7 @@ import java.util.stream.Collectors;
 
 
 @Mapper(componentModel = "spring", uses = MapStructSpringConfig.class)
-public interface SceneConfigMapper extends Converter<SceneConfigCommand, RetrySceneConfig> {
+public interface RetrySceneConfigMapper extends Converter<SceneConfigCommand, RetrySceneConfig> {
 
 
     @Override

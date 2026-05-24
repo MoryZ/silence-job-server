@@ -5,7 +5,7 @@ import cn.hutool.core.util.StrUtil;
 import org.springframework.context.ApplicationEvent;
 import com.alibaba.fastjson2.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.old.silence.job.common.util.StreamUtils;
+import com.old.silence.core.util.CollectionUtils;
 import com.old.silence.job.server.common.convert.AlarmInfoConverter;
 import com.old.silence.job.server.common.dto.JobAlarmInfo;
 import com.old.silence.job.server.domain.model.JobTaskBatch;
@@ -36,10 +36,10 @@ public abstract class AbstractJobAlarm<E extends ApplicationEvent> extends Abstr
         Map<BigInteger, List<JobAlarmInfo>> jobAlarmInfoMap = new HashMap<>();
         jobAlarmInfoList.forEach(i -> notifyScene.add(Integer.valueOf(i.getNotifyScene().getValue())));
 
-        Map<BigInteger, JobAlarmInfo> jobAlarmInfoGroupMap = StreamUtils.toIdentityMap(jobAlarmInfoList, JobAlarmInfo::getId);
+        Map<BigInteger, JobAlarmInfo> jobAlarmInfoGroupMap = CollectionUtils.transformToMap(jobAlarmInfoList, JobAlarmInfo::getId);
         // 查询数据库
         QueryWrapper<JobTaskBatch> wrapper = new QueryWrapper<JobTaskBatch>()
-                .in("batch.id", StreamUtils.toSet(jobAlarmInfoList, JobAlarmInfo::getId));
+                .in("batch.id", CollectionUtils.transformToSet(jobAlarmInfoList, JobAlarmInfo::getId));
 
         List<JobBatchResponseDO> jobBatchResponseDOList = jobTaskBatchDao.selectJobBatchListByIds(wrapper);
         for (JobBatchResponseDO jobBatchResponseDO : jobBatchResponseDOList) {

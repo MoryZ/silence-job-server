@@ -8,12 +8,12 @@ import cn.hutool.core.util.StrUtil;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.LinkedBlockingDeque;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.jetbrains.annotations.NotNull;
@@ -24,6 +24,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 import com.alibaba.fastjson2.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.plugins.pagination.PageDTO;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -36,7 +38,6 @@ import com.old.silence.job.common.enums.JobTaskExecutorScene;
 import com.old.silence.job.common.enums.SystemTaskType;
 import com.old.silence.job.common.expression.ExpressionEngine;
 import com.old.silence.job.common.expression.ExpressionFactory;
-import com.old.silence.job.common.util.StreamUtils;
 import com.old.silence.job.log.SilenceJobLog;
 import com.old.silence.job.server.api.assembler.WorkflowMapper;
 import com.old.silence.job.server.common.WaitStrategy;
@@ -56,7 +57,6 @@ import com.old.silence.job.server.dto.CheckDecisionVO;
 import com.old.silence.job.server.dto.ExportWorkflowVO;
 import com.old.silence.job.server.dto.JobTaskConfig;
 import com.old.silence.job.server.dto.WorkflowCommand;
-import com.old.silence.job.server.dto.WorkflowQuery;
 import com.old.silence.job.server.dto.WorkflowTriggerVO;
 import com.old.silence.job.server.exception.SilenceJobServerException;
 import com.old.silence.job.server.handler.GroupHandler;
@@ -66,6 +66,7 @@ import com.old.silence.job.server.infrastructure.persistence.dao.JobDao;
 import com.old.silence.job.server.infrastructure.persistence.dao.JobSummaryDao;
 import com.old.silence.job.server.infrastructure.persistence.dao.WorkflowDao;
 import com.old.silence.job.server.infrastructure.persistence.dao.WorkflowNodeDao;
+import com.old.silence.job.server.infrastructure.persistence.dao.WorkflowNotifyConfigRelationDao;
 import com.old.silence.job.server.job.task.dto.WorkflowTaskPrepareDTO;
 import com.old.silence.job.server.job.task.support.WorkflowPrePareHandler;
 import com.old.silence.job.server.job.task.support.WorkflowTaskConverter;
@@ -74,6 +75,7 @@ import com.old.silence.job.server.vo.WorkflowDetailResponseVO;
 import com.old.silence.job.server.vo.WorkflowResponseVO;
 
 import com.old.silence.core.util.CollectionUtils;
+import com.old.silence.job.server.vo.WorkflowView;
 
 
 @Service
@@ -92,13 +94,14 @@ public class WorkflowService  {
     private final GroupConfigDao groupConfigDao;
     private final GroupHandler groupHandler;
     private final JobSummaryDao jobSummaryDao;
+    private final WorkflowNotifyConfigRelationDao workflowNotifyConfigRelationDao;
     private final WorkflowMapper workflowMapper;
 
     public WorkflowService(WorkflowDao workflowDao, WorkflowNodeDao workflowNodeDao,
                            SystemProperties systemProperties, WorkflowHandler workflowHandler,
                            WorkflowPrePareHandler terminalWorkflowPrepareHandler, JobDao jobDao,
                            GroupConfigDao groupConfigDao, GroupHandler groupHandler,
-                           JobSummaryDao jobSummaryDao, WorkflowMapper workflowMapper) {
+                           JobSummaryDao jobSummaryDao, WorkflowNotifyConfigRelationDao workflowNotifyConfigRelationDao, WorkflowMapper workflowMapper) {
         this.workflowDao = workflowDao;
         this.workflowNodeDao = workflowNodeDao;
         this.systemProperties = systemProperties;
@@ -108,6 +111,7 @@ public class WorkflowService  {
         this.groupConfigDao = groupConfigDao;
         this.groupHandler = groupHandler;
         this.jobSummaryDao = jobSummaryDao;
+        this.workflowNotifyConfigRelationDao = workflowNotifyConfigRelationDao;
         this.workflowMapper = workflowMapper;
     }
 
@@ -153,6 +157,13 @@ public class WorkflowService  {
         workflow.setId(null);
         Assert.isTrue(1 == workflowDao.insert(workflow), () -> new SilenceJobServerException("新增工作流失败"));
 
+        if (CollectionUtils.isNotEmpty(workflow.getNotifyRelations())) {
+            workflow.getNotifyRelations().forEach(workflowNotifyConfigRelation-> {
+                workflowNotifyConfigRelation.setWorkflowId(workflow.getId());
+            });
+            workflowNotifyConfigRelationDao.insertBatch(workflow.getNotifyRelations());
+        }
+
         // 获取DAG节点配置
 
         // 递归构建图
@@ -163,10 +174,14 @@ public class WorkflowService  {
                 workflow.getVersion());
         log.info("图构建完成. graph:[{}]", graph);
 
-        workflow = workflowDao.selectById(workflow.getId());
         // 保存图信息
-        workflow.setFlowInfo(JSON.toJSONString(GraphUtils.serializeGraphToJson(graph)));
-        Assert.isTrue(1 == workflowDao.updateById(workflow), () -> new SilenceJobServerException("保存工作流图失败"));
+        var flowInfoJson = JSON.toJSONString(GraphUtils.serializeGraphToJson(graph));
+
+        LambdaUpdateWrapper<Workflow> updateWrapper = new LambdaUpdateWrapper<>();
+        updateWrapper.eq(Workflow::getId, workflow.getId())
+                .set(Workflow::getFlowInfo, flowInfoJson);
+
+        Assert.isTrue(1 == workflowDao.update(null, updateWrapper), () -> new SilenceJobServerException("保存工作流图失败"));
         return true;
     }
 
@@ -178,41 +193,24 @@ public class WorkflowService  {
                 .build();
     }
 
-    public WorkflowDetailResponseVO getWorkflowDetail(BigInteger id) {
-
-        Workflow workflow = workflowDao.selectOne(
-                new LambdaQueryWrapper<Workflow>()
-                        .eq(Workflow::getId, id)
-        );
-        if (Objects.isNull(workflow)) {
-            return null;
-        }
+    public WorkflowDetailResponseVO findById(BigInteger id) {
+        WorkflowView workflow = workflowDao.findById(id, WorkflowView.class).orElse(null);
 
         return doGetWorkflowDetail(workflow);
     }
 
     
-    public IPage<WorkflowResponseVO> queryPage(Page<Workflow> pageDTO, WorkflowQuery queryVO) {
+    public IPage<WorkflowResponseVO> queryPage(Page<Workflow> pageDTO, QueryWrapper<Workflow> queryWrapper) {
 
-        List<String> groupNames = List.of();
+        IPage<WorkflowView> resultPage = workflowDao.findByQuery( queryWrapper, pageDTO, WorkflowView.class);
 
-        Page<Workflow> page = workflowDao.selectPage(pageDTO,
-                new LambdaQueryWrapper<Workflow>()
-                        .eq(Workflow::getDeleted, false)
-                        .in(CollectionUtils.isNotEmpty(groupNames), Workflow::getGroupName, groupNames)
-                        .like(StrUtil.isNotBlank(queryVO.getWorkflowName()), Workflow::getWorkflowName,
-                                queryVO.getWorkflowName())
-                        .eq(Objects.nonNull(queryVO.getWorkflowStatus()), Workflow::getWorkflowStatus,
-                                queryVO.getWorkflowStatus())
-                        .orderByDesc(Workflow::getId));
-
-        return page.convert(workflowMapper::convertToWorkflow);
+        return resultPage.convert(workflowMapper::convertToWorkflow);
     }
 
     @Transactional
     public Boolean update(Workflow workflow, WorkflowCommand.NodeConfig nodeConfig) {
-
-        Assert.notNull(workflow.getId(), () -> new SilenceJobServerException("工作流ID不能为空"));
+        var id = workflow.getId();
+        Assert.notNull(id, () -> new SilenceJobServerException("工作流ID不能为空"));
 
         Assert.notNull(workflow, () -> new SilenceJobServerException("工作流不存在"));
 
@@ -226,7 +224,7 @@ public class WorkflowService  {
         int version = workflow.getVersion();
         // 递归构建图
         workflowHandler.buildGraph(Lists.newArrayList(SystemConstants.ROOT), new LinkedBlockingDeque<>(),
-                workflow.getGroupName(), workflow.getId(), nodeConfig, graph, version + 1);
+                workflow.getGroupName(), id, nodeConfig, graph, version + 1);
 
         log.info("图构建完成. graph:[{}]", graph);
 
@@ -239,10 +237,18 @@ public class WorkflowService  {
         Assert.isTrue(
                 workflowDao.update(workflow,
                         new LambdaQueryWrapper<Workflow>()
-                                .eq(Workflow::getId, workflow.getId())
+                                .eq(Workflow::getId, id)
                                 .eq(Workflow::getVersion, version)) > 0,
                 () -> new SilenceJobServerException("更新失败"));
-
+        if (CollectionUtils.isNotEmpty(workflow.getNotifyRelations())) {
+            workflowNotifyConfigRelationDao.deleteByWorkflowId(id);
+            workflow.getNotifyRelations().forEach(workflowNotifyConfigRelation-> {
+                workflowNotifyConfigRelation.setWorkflowId(id);
+            });
+            workflowNotifyConfigRelationDao.insertBatch(workflow.getNotifyRelations());
+        } else {
+            workflowNotifyConfigRelationDao.deleteByWorkflowId(id);
+        }
         return Boolean.TRUE;
     }
 
@@ -289,14 +295,14 @@ public class WorkflowService  {
 
     
     public List<WorkflowResponseVO> getWorkflowNameList(String keywords, BigInteger workflowId, String groupName) {
-        Page<Workflow> selectPage = workflowDao.selectPage(
-                new PageDTO<>(1, 100),
+        IPage<WorkflowView> selectPage = workflowDao.findByQuery(
                 new LambdaQueryWrapper<Workflow>()
                         .select(Workflow::getId, Workflow::getWorkflowName)
                         .likeRight(StrUtil.isNotBlank(keywords), Workflow::getWorkflowName, StrUtil.trim(keywords))
                         .eq(Objects.nonNull(workflowId), Workflow::getId, workflowId)
                         .eq(StrUtil.isNotBlank(groupName), Workflow::getGroupName, groupName)
-                        .orderByDesc(Workflow::getId));
+                        .orderByDesc(Workflow::getId),
+                new PageDTO<>(1, 100), WorkflowView.class);
 
         return CollectionUtils.transformToList(selectPage.getRecords(), workflowMapper::convertToWorkflow);
     }
@@ -327,7 +333,7 @@ public class WorkflowService  {
 
         List<WorkflowDetailResponseVO> resultList = new ArrayList<>();
         PartitionTaskUtils.process(startId -> {
-            List<Workflow> workflowList = workflowDao.selectPage(new PageDTO<>(0, 100),
+            List<WorkflowView> workflowList = workflowDao.findByQuery(
                     new LambdaQueryWrapper<Workflow>()
                             .eq(StrUtil.isNotBlank(exportVO.getGroupName()), Workflow::getGroupName, exportVO.getGroupName())
                             .eq(Objects.nonNull(exportVO.getWorkflowStatus()), Workflow::getWorkflowStatus,
@@ -337,14 +343,14 @@ public class WorkflowService  {
                             .in(CollectionUtils.isNotEmpty(exportVO.getWorkflowIds()), Workflow::getId, exportVO.getWorkflowIds())
                             .ge(Workflow::getId, startId)
                             .orderByAsc(Workflow::getId)
-            ).getRecords();
+            , new PageDTO<>(0, 100), WorkflowView.class).getRecords();
             return workflowList.stream()
                     .map(this::doGetWorkflowDetail)
                     .map(WorkflowPartitionTask::new)
                     .collect(Collectors.toList());
         }, partitionTasks -> {
             List<WorkflowPartitionTask> workflowPartitionTasks = (List<WorkflowPartitionTask>) partitionTasks;
-            resultList.addAll(StreamUtils.toList(workflowPartitionTasks, WorkflowPartitionTask::getResponseVO));
+            resultList.addAll(CollectionUtils.transformToList(workflowPartitionTasks, WorkflowPartitionTask::getResponseVO));
         }, 0);
 
         return JSON.toJSONString(resultList);
@@ -367,7 +373,7 @@ public class WorkflowService  {
         );
         if (CollectionUtils.isNotEmpty(jobSummaries)) {
             Assert.isTrue(jobSummaries.size() ==
-                            jobSummaryDao.deleteBatchIds(StreamUtils.toSet(jobSummaries, JobSummary::getId)),
+                            jobSummaryDao.deleteBatchIds(CollectionUtils.transformToSet(jobSummaries, JobSummary::getId)),
                     () -> new SilenceJobServerException("汇总表删除失败")
             );
         }
@@ -385,16 +391,18 @@ public class WorkflowService  {
         }
     }
 
-    private WorkflowDetailResponseVO doGetWorkflowDetail(Workflow workflow) {
+    private WorkflowDetailResponseVO doGetWorkflowDetail(WorkflowView workflow) {
         WorkflowDetailResponseVO responseVO = workflowMapper.convert(workflow);
         List<WorkflowNode> workflowNodes = workflowNodeDao.selectList(new LambdaQueryWrapper<WorkflowNode>()
                 .eq(WorkflowNode::getVersion, workflow.getVersion())
                 .eq(WorkflowNode::getWorkflowId, workflow.getId())
                 .orderByAsc(WorkflowNode::getPriorityLevel));
 
-        List<BigInteger> jobIds = StreamUtils.toList(workflowNodes, WorkflowNode::getJobId);
-        List<Job> jobs = jobDao.selectList(new LambdaQueryWrapper<Job>()
-                .in(Job::getId, new HashSet<>(jobIds)));
+        List<BigInteger> jobIds = CollectionUtils.transformToList(workflowNodes, WorkflowNode::getJobId);
+        if (CollectionUtils.isEmpty(jobIds)) {
+            return responseVO;
+        }
+        List<Job> jobs = jobDao.selectBatchIds(jobIds);
 
         Map<BigInteger, Job> jobMap = CollectionUtils.transformToMap(jobs, Job::getId);
 
@@ -406,7 +414,7 @@ public class WorkflowService  {
                     if (Objects.nonNull(jobTask)) {
                         jobTask.setJobName(jobMap.getOrDefault(jobTask.getJobId(), new Job()).getJobName());
                     }
-                }).collect(Collectors.toMap(WorkflowDetailResponseVO.NodeInfo::getId, i -> i));
+                }).collect(Collectors.toMap(WorkflowDetailResponseVO.NodeInfo::getId, Function.identity()));
 
         String flowInfo = workflow.getFlowInfo();
         try {

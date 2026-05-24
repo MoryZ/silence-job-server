@@ -6,7 +6,6 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.old.silence.core.util.CollectionUtils;
 import com.old.silence.job.common.enums.RetryNotifyScene;
-import com.old.silence.job.common.util.StreamUtils;
 import com.old.silence.job.server.common.Lifecycle;
 import com.old.silence.job.server.common.dto.PartitionTask;
 import com.old.silence.job.server.common.schedule.AbstractSchedule;
@@ -135,12 +134,12 @@ public abstract class AbstractRetryTaskAlarmSchedule extends AbstractSchedule im
 
         // 从DB中获取通知人信息
         List<NotifyRecipient> notifyRecipients = notifyRecipientDao.selectBatchIds(recipientIds);
-        Map<BigInteger, NotifyRecipient> recipientMap = StreamUtils.toIdentityMap(notifyRecipients, NotifyRecipient::getId);
+        Map<BigInteger, NotifyRecipient> recipientMap = CollectionUtils.transformToMap(notifyRecipients, NotifyRecipient::getId);
 
         Map<BigInteger, NotifyConfigDTO> notifyConfigMap = Maps.newHashMap();
         for (final NotifyConfigDTO notifyConfigDTO : notifyConfigs) {
 
-            List<NotifyConfigDTO.RecipientInfo> recipientList = StreamUtils.toList(notifyConfigDTO.getRecipientIds(),
+            List<NotifyConfigDTO.RecipientInfo> recipientList = CollectionUtils.transformToList(notifyConfigDTO.getRecipientIds(),
                     recipientId -> {
                         NotifyRecipient notifyRecipient = recipientMap.get(recipientId);
                         if (Objects.isNull(notifyRecipient)) {

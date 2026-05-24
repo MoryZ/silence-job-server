@@ -8,7 +8,7 @@ import com.old.silence.core.util.CollectionUtils;
 import com.old.silence.job.common.enums.JobBlockStrategy;
 import com.old.silence.job.common.enums.JobTaskExecutorScene;
 import com.old.silence.job.common.enums.JobTaskStatus;
-import com.old.silence.job.common.util.StreamUtils;
+
 import com.old.silence.job.server.domain.model.Job;
 import com.old.silence.job.server.domain.model.JobTask;
 import com.old.silence.job.server.exception.SilenceJobServerException;
@@ -22,6 +22,7 @@ import com.old.silence.job.server.job.task.support.executor.job.JobExecutorFacto
 import com.old.silence.job.server.common.pekko.ActorGenerator;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * 重新触发执行失败的任务
@@ -75,9 +76,8 @@ public class RecoveryBlockStrategy extends AbstracJobBlockStrategy {
         // 执行任务 Stop or Fail 任务
         JobExecutor jobExecutor = JobExecutorFactory.getJobExecutor(context.getTaskType());
         jobExecutor.execute(buildJobExecutorContext(context, job,
-                StreamUtils.filter(jobTasks,
-                        (jobTask) -> JobTaskStatus.NOT_SUCCESS.contains(jobTask.getTaskStatus())
-                )));
+                jobTasks.stream().filter(jobTask -> JobTaskStatus.NOT_SUCCESS.contains(jobTask.getTaskStatus())
+                ).collect(Collectors.toList())));
     }
 
     @Override

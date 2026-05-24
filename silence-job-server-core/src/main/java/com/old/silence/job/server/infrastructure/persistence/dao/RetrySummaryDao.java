@@ -14,7 +14,7 @@ import com.old.silence.job.server.vo.DashboardRetryLineResponseDO;
 
 import java.util.List;
 
-
+@Mapper
 public interface RetrySummaryDao extends BaseMapper<RetrySummary> {
 
     int insertBatch(@Param("list") List<RetrySummary> list);

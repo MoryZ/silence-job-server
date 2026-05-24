@@ -16,7 +16,7 @@ import com.old.silence.job.common.enums.JobTaskType;
 import com.old.silence.job.common.enums.MapReduceStage;
 import com.old.silence.job.common.exception.SilenceJobMapReduceException;
 import com.old.silence.job.common.model.JobArgsHolder;
-import com.old.silence.job.common.util.StreamUtils;
+
 import com.old.silence.job.log.SilenceJobLog;
 import com.old.silence.job.server.common.allocate.client.ClientLoadBalanceManager;
 import com.old.silence.job.server.common.dto.RegisterNodeInfo;
@@ -105,7 +105,7 @@ public class MapReduceTaskGenerator extends AbstractJobTaskGenerator {
         jobTask.setArgsType(context.getArgsType());
         JobArgsHolder jobArgsHolder = new JobArgsHolder();
         jobArgsHolder.setJobParams(jobParams.getArgsStr());
-        jobArgsHolder.setReduces(StreamUtils.toList(jobTasks, JobTask::getResultMessage));
+        jobArgsHolder.setReduces(CollectionUtils.transformToList(jobTasks, JobTask::getResultMessage));
         jobTask.setArgsStr(JSON.toJSONString(jobArgsHolder));
         jobTask.setTaskStatus(clientInfo.getValue());
         jobTask.setResultMessage(Optional.ofNullable(jobTask.getResultMessage()).orElse(StrUtil.EMPTY));
@@ -135,7 +135,7 @@ public class MapReduceTaskGenerator extends AbstractJobTaskGenerator {
         }
 
         // 这里需要判断是否是map
-        List<String> allMapJobTasks = StreamUtils.toList(jobTasks, JobTask::getResultMessage);
+        List<String> allMapJobTasks = CollectionUtils.transformToList(jobTasks, JobTask::getResultMessage);
         List<List<String>> partition = averageAlgorithm(allMapJobTasks, reduceParallel);
 
         jobTasks = new ArrayList<>(partition.size());

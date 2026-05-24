@@ -53,6 +53,8 @@ public class WorkflowDetailResponseVO {
      */
     private Integer executorTimeout;
 
+    private String description;
+
     /**
      * 0、关闭、1、开启
      */
@@ -276,6 +278,8 @@ public class WorkflowDetailResponseVO {
         }
     }
 
+    private BigInteger ownerId;
+
     /**
      * 通知告警场景配置id列表
      */
@@ -337,6 +341,14 @@ public class WorkflowDetailResponseVO {
         this.executorTimeout = executorTimeout;
     }
 
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
     public Boolean getWorkflowStatus() {
         return workflowStatus;
     }
@@ -367,6 +379,14 @@ public class WorkflowDetailResponseVO {
 
     public void setNodeConfig(NodeConfig nodeConfig) {
         this.nodeConfig = nodeConfig;
+    }
+
+    public BigInteger getOwnerId() {
+        return ownerId;
+    }
+
+    public void setOwnerId(BigInteger ownerId) {
+        this.ownerId = ownerId;
     }
 
     public Set<BigInteger> getNotifyIds() {

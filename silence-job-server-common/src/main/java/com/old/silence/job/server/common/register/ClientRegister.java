@@ -8,7 +8,7 @@ import com.old.silence.core.util.CollectionUtils;
 import com.old.silence.job.common.constant.SystemConstants.HTTP_PATH;
 import com.old.silence.job.common.enums.NodeType;
 import com.old.silence.job.common.model.ApiResult;
-import com.old.silence.job.common.util.StreamUtils;
+
 import com.old.silence.job.log.SilenceJobLog;
 import com.old.silence.job.server.common.cache.CacheConsumerGroup;
 import com.old.silence.job.server.common.cache.CacheRegisterTable;
@@ -130,7 +130,7 @@ public class ClientRegister extends AbstractRegister {
                         .eq(ServerNode::getNodeType, NodeType.SERVER);
                 List<ServerNode> serverNodes = serverNodeDao.selectList(wrapper);
 
-                serverNodes = StreamUtils.filter(serverNodes, serverNode -> !serverNode.getHostId().equals(ServerRegister.CURRENT_CID));
+                serverNodes = serverNodes.stream().filter(serverNode -> !serverNode.getHostId().equals(ServerRegister.CURRENT_CID)).collect(Collectors.toList());
 
                 List<ServerNode> waitRefreshDBClientNodes = new ArrayList<>();
 

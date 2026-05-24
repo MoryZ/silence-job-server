@@ -10,6 +10,7 @@ import com.old.silence.job.server.domain.model.Namespace;
  * </p>
  *
  */
+@Mapper
 public interface NamespaceDao extends BaseMapper<Namespace> {
 
 }

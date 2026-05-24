@@ -10,7 +10,6 @@ import org.springframework.stereotype.Service;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.old.silence.job.common.util.StreamUtils;
 import com.old.silence.job.server.api.assembler.JobTaskResponseVOMapper;
 import com.old.silence.job.server.domain.model.JobTask;
 import com.old.silence.job.server.dto.JobTaskQuery;
@@ -63,10 +62,10 @@ public class JobTaskService {
 
         List<JobTaskResponseVO> jobTaskResponseVOs = CollectionUtils.transformToList(tasks, jobTaskResponseVOMapper::convert);
 
-        Set<BigInteger> parentIds = StreamUtils.toSet(jobTaskResponseVOs, JobTaskResponseVO::getId);
+        Set<BigInteger> parentIds = CollectionUtils.transformToSet(jobTaskResponseVOs, JobTaskResponseVO::getId);
         List<JobTask> jobTasks = jobTaskDao.selectList(new LambdaQueryWrapper<JobTask>()
                 .select(JobTask::getParentId).in(JobTask::getParentId, parentIds));
-        Set<BigInteger> jobTaskParentIds = StreamUtils.toSet(jobTasks, JobTask::getParentId);
+        Set<BigInteger> jobTaskParentIds = CollectionUtils.transformToSet(jobTasks, JobTask::getParentId);
         jobTaskResponseVOs.forEach(jobTask -> jobTask.setChildNode(!jobTaskParentIds.contains(jobTask.getId())));
 
         return jobTaskResponseVOs;

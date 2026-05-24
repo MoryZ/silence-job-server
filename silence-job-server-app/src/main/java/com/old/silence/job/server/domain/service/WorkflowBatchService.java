@@ -4,6 +4,8 @@ import cn.hutool.core.lang.Assert;
 import cn.hutool.core.util.StrUtil;
 
 import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -27,9 +29,7 @@ import com.google.common.graph.MutableGraph;
 import com.old.silence.job.common.constant.SystemConstants;
 import com.old.silence.job.common.enums.JobOperationReason;
 import com.old.silence.job.common.enums.JobTaskBatchStatus;
-import com.old.silence.job.common.util.StreamUtils;
 import com.old.silence.job.server.api.assembler.JobBatchResponseVOConverter;
-import com.old.silence.job.server.api.assembler.JobResponseVOMapper;
 import com.old.silence.job.server.api.assembler.WorkflowMapper;
 import com.old.silence.job.server.api.config.TenantContext;
 import com.old.silence.job.server.domain.model.Job;
@@ -54,6 +54,7 @@ import com.old.silence.job.server.vo.WorkflowBatchResponseDO;
 import com.old.silence.job.server.vo.WorkflowBatchResponseVO;
 import com.old.silence.job.server.vo.WorkflowDetailResponseVO;
 import com.old.silence.core.util.CollectionUtils;
+import com.old.silence.job.server.vo.WorkflowView;
 
 
 @Service
@@ -70,13 +71,12 @@ public class WorkflowBatchService {
     private final JobHandler jobHandler;
     private final WorkflowMapper workflowMapper;
     private final JobBatchResponseVOConverter jobBatchResponseVOConverter;
-    private final JobResponseVOMapper jobResponseVOMapper;
 
     public WorkflowBatchService(WorkflowTaskBatchDao workflowTaskBatchDao, WorkflowDao workflowDao,
                                 WorkflowNodeDao workflowNodeDao, JobTaskBatchDao jobTaskBatchDao,
                                 WorkflowHandler workflowHandler, WorkflowBatchHandler workflowBatchHandler,
                                 JobDao jobDao, JobHandler jobHandler, WorkflowMapper workflowMapper,
-                                JobBatchResponseVOConverter jobBatchResponseVOConverter, JobResponseVOMapper jobResponseVOMapper) {
+                                JobBatchResponseVOConverter jobBatchResponseVOConverter) {
         this.workflowTaskBatchDao = workflowTaskBatchDao;
         this.workflowDao = workflowDao;
         this.workflowNodeDao = workflowNodeDao;
@@ -87,7 +87,6 @@ public class WorkflowBatchService {
         this.jobHandler = jobHandler;
         this.workflowMapper = workflowMapper;
         this.jobBatchResponseVOConverter = jobBatchResponseVOConverter;
-        this.jobResponseVOMapper = jobResponseVOMapper;
     }
 
     private static boolean isNoOperation(JobTaskBatch i) {
@@ -130,7 +129,7 @@ public class WorkflowBatchService {
             return null;
         }
 
-        Workflow workflow = workflowDao.selectById(workflowTaskBatch.getWorkflowId());
+        WorkflowView workflow = workflowDao.findById(workflowTaskBatch.getWorkflowId(), WorkflowView.class).orElse(null);
 
         WorkflowDetailResponseVO responseVO = workflowMapper.convert(workflow);
         responseVO.setWorkflowBatchStatus(workflowTaskBatch.getTaskBatchStatus());
@@ -140,16 +139,16 @@ public class WorkflowBatchService {
 
         List<Job> jobs = jobDao.selectList(
                 new LambdaQueryWrapper<Job>()
-                        .in(Job::getId, StreamUtils.toSet(workflowNodes, WorkflowNode::getJobId)));
+                        .in(Job::getId, CollectionUtils.transformToSet(workflowNodes, WorkflowNode::getJobId)));
 
-        Map<BigInteger, Job> jobMap = StreamUtils.toIdentityMap(jobs, Job::getId);
+        Map<BigInteger, Job> jobMap = CollectionUtils.transformToMap(jobs, Job::getId);
 
         List<JobTaskBatch> alJobTaskBatchList = jobTaskBatchDao.selectList(
                 new LambdaQueryWrapper<JobTaskBatch>()
                         .eq(JobTaskBatch::getWorkflowTaskBatchId, id)
                         .orderByDesc(JobTaskBatch::getId));
 
-        Map<BigInteger, List<JobTaskBatch>> jobTaskBatchMap = StreamUtils.groupByKey(alJobTaskBatchList,
+        Map<BigInteger, Collection<JobTaskBatch>> jobTaskBatchMap = CollectionUtils.groupingBy(alJobTaskBatchList,
                 JobTaskBatch::getWorkflowNodeId);
         List<WorkflowDetailResponseVO.NodeInfo> nodeInfos = CollectionUtils.transformToList(workflowNodes, workflowMapper::convert);
 
@@ -165,7 +164,7 @@ public class WorkflowBatchService {
                         jobTask.setJobName(jobMap.getOrDefault(jobTask.getJobId(), new Job()).getJobName());
                     }
 
-                    List<JobTaskBatch> jobTaskBatchList = jobTaskBatchMap.get(nodeInfo.getId());
+                    List<JobTaskBatch> jobTaskBatchList = new ArrayList<>(jobTaskBatchMap.get(nodeInfo.getId()));
                     if (CollectionUtils.isNotEmpty(jobTaskBatchList)) {
                         jobTaskBatchList = jobTaskBatchList.stream()
                                 .sorted(Comparator.comparing(jobTaskBatch -> jobTaskBatch.getTaskBatchStatus().getValue()))
@@ -204,7 +203,7 @@ public class WorkflowBatchService {
 
         for (BigInteger noOperationNodeId : allNoOperationNode) {
             WorkflowDetailResponseVO.NodeInfo nodeInfo = workflowNodeMap.get(noOperationNodeId);
-            List<JobTaskBatch> jobTaskBatches = jobTaskBatchMap.get(nodeInfo.getId());
+            Collection<JobTaskBatch> jobTaskBatches = jobTaskBatchMap.get(nodeInfo.getId());
 
             if (CollectionUtils.isNotEmpty(jobTaskBatches)) {
                 jobTaskBatches = jobTaskBatches.stream()
@@ -263,7 +262,7 @@ public class WorkflowBatchService {
             return Boolean.TRUE;
         }
 
-        Set<BigInteger> jobTaskBatchIds = StreamUtils.toSet(jobTaskBatches, JobTaskBatch::getId);
+        Set<BigInteger> jobTaskBatchIds = CollectionUtils.transformToSet(jobTaskBatches, JobTaskBatch::getId);
         jobHandler.deleteJobTaskBatchByIds(jobTaskBatchIds);
 
         return Boolean.TRUE;

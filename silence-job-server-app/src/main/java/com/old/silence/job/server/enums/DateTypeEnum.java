@@ -1,6 +1,6 @@
 package com.old.silence.job.server.enums;
 
-import com.old.silence.job.common.util.StreamUtils;
+import com.old.silence.core.util.CollectionUtils;
 import com.old.silence.job.server.vo.DashboardLineResponseVO;
 
 import java.time.Instant;
@@ -22,7 +22,7 @@ public enum DateTypeEnum {
      */
     DAY(
             voList -> {
-                Map<String, DashboardLineResponseVO> responseVoMap = StreamUtils.toIdentityMap(voList,
+                Map<String, DashboardLineResponseVO> responseVoMap = CollectionUtils.transformToMap(voList,
                         DashboardLineResponseVO::getCreatedDate);
                 int hourNow = Instant.now().atZone(ZoneId.systemDefault()).getHour();;
                 for (int hourOffset = 0; hourOffset <= hourNow; hourOffset++) {
@@ -41,7 +41,7 @@ public enum DateTypeEnum {
      */
     WEEK(
             voList -> {
-                Map<String, DashboardLineResponseVO> responseVoMap = StreamUtils.toIdentityMap(
+                Map<String, DashboardLineResponseVO> responseVoMap = CollectionUtils.transformToMap(
                         voList, DashboardLineResponseVO::getCreatedDate);
                 for (int dayOffset = 0; dayOffset < 7; dayOffset++) {
                     String createdDate = Instant.now().minus(dayOffset, ChronoUnit.DAYS).atOffset(ZoneOffset.UTC).format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
@@ -59,7 +59,7 @@ public enum DateTypeEnum {
      */
     MONTH(
             voList -> {
-                Map<String, DashboardLineResponseVO> responseVoMap = StreamUtils.toIdentityMap(
+                Map<String, DashboardLineResponseVO> responseVoMap = CollectionUtils.transformToMap(
                         voList, DashboardLineResponseVO::getCreatedDate);
                 int lastDayOfMonth = Instant.now().with(TemporalAdjusters.lastDayOfMonth()).atZone(ZoneId.systemDefault()).getDayOfMonth();
                 for (int dayOffset = 0; dayOffset < lastDayOfMonth; dayOffset++) {
@@ -78,7 +78,7 @@ public enum DateTypeEnum {
      */
     YEAR(
             voList -> {
-                Map<String, DashboardLineResponseVO> responseVoMap = StreamUtils.toIdentityMap(
+                Map<String, DashboardLineResponseVO> responseVoMap = CollectionUtils.transformToMap(
                         voList, DashboardLineResponseVO::getCreatedDate);
                 for (int monthOffset = 0; monthOffset < 12; monthOffset++) {
                     String createdDate = Instant.now().minus(monthOffset, ChronoUnit.MONTHS).atZone(ZoneId.systemDefault()).format(DateTimeFormatter.ofPattern("yyyy-MM"));

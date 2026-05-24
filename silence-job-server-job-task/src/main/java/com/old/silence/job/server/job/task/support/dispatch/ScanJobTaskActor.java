@@ -12,7 +12,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.PageDTO;
 import com.old.silence.core.util.CollectionUtils;
 import com.old.silence.job.common.constant.SystemConstants;
 import com.old.silence.job.common.enums.JobTaskExecutorScene;
-import com.old.silence.job.common.util.StreamUtils;
+
 import com.old.silence.job.log.SilenceJobLog;
 import com.old.silence.job.server.common.WaitStrategy;
 import com.old.silence.job.server.common.cache.CacheConsumerGroup;
@@ -182,10 +182,10 @@ public class ScanJobTaskActor extends AbstractActor {
 
         // 过滤已关闭的组
         if (CollectionUtils.isNotEmpty(jobs)) {
-            List<String> groupConfigs = StreamUtils.toList(groupConfigDao.selectList(new LambdaQueryWrapper<GroupConfig>()
+            List<String> groupConfigs = CollectionUtils.transformToList(groupConfigDao.selectList(new LambdaQueryWrapper<GroupConfig>()
                             .select(GroupConfig::getGroupName)
                             .eq(GroupConfig::getGroupStatus, true)
-                            .in(GroupConfig::getGroupName, StreamUtils.toSet(jobs, Job::getGroupName))),
+                            .in(GroupConfig::getGroupName, CollectionUtils.transformToSet(jobs, Job::getGroupName))),
                     GroupConfig::getGroupName);
             jobs = jobs.stream().filter(job -> groupConfigs.contains(job.getGroupName())).collect(Collectors.toList());
         }

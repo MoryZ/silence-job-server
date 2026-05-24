@@ -11,7 +11,6 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.google.common.collect.Lists;
 import com.old.silence.core.util.CollectionUtils;
 import com.old.silence.job.common.enums.JobTaskBatchStatus;
-import com.old.silence.job.common.util.StreamUtils;
 import com.old.silence.job.log.SilenceJobLog;
 import com.old.silence.job.server.common.Lifecycle;
 import com.old.silence.job.server.common.config.SystemProperties;
@@ -115,7 +114,7 @@ public class JobLogMergeSchedule extends AbstractSchedule implements Lifecycle {
     public void processJobLogPartitionTasks(List<? extends PartitionTask> partitionTasks) {
 
         // Waiting for merge JobTaskBatchList
-        List<BigInteger> ids = StreamUtils.toList(partitionTasks, PartitionTask::getId);
+        List<BigInteger> ids = CollectionUtils.transformToList(partitionTasks, PartitionTask::getId);
         if (CollectionUtils.isEmpty(ids)) {
             return;
         }

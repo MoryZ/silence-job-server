@@ -4,7 +4,6 @@ import org.springframework.stereotype.Component;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.google.common.collect.Sets;
 import com.old.silence.core.util.CollectionUtils;
-import com.old.silence.job.common.util.StreamUtils;
 import com.old.silence.job.log.SilenceJobLog;
 import com.old.silence.job.server.common.Lifecycle;
 import com.old.silence.job.server.common.config.SystemProperties;
@@ -98,7 +97,7 @@ public class RetrySummarySchedule extends AbstractSchedule implements Lifecycle 
                         .eq(RetrySummary::getTriggerAt, todayFrom)
                 );
 
-                Map<Triple<String, String, Instant>, RetrySummary> summaryMap = StreamUtils.toIdentityMap(
+                Map<Triple<String, String, Instant>, RetrySummary> summaryMap = CollectionUtils.transformToMap(
                         retrySummaries,
                         retrySummary -> Triple.of(mergeKey(retrySummary), retrySummary.getSceneName(), retrySummary.getTriggerAt()));
 

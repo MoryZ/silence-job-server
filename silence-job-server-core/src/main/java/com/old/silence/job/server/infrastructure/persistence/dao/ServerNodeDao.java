@@ -10,6 +10,7 @@ import com.old.silence.job.server.vo.ActivePodQuantityResponseDO;
 
 import java.util.List;
 
+@Mapper
 public interface ServerNodeDao extends BaseMapper<ServerNode> {
 
 

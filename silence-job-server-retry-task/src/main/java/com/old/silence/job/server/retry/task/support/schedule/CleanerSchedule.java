@@ -14,7 +14,6 @@ import com.old.silence.core.util.CollectionUtils;
 import com.old.silence.job.common.context.SilenceSpringContext;
 import com.old.silence.job.common.enums.RetryStatus;
 import com.old.silence.job.common.enums.SystemTaskType;
-import com.old.silence.job.common.util.StreamUtils;
 import com.old.silence.job.log.SilenceJobLog;
 import com.old.silence.job.server.common.Lifecycle;
 import com.old.silence.job.server.common.config.SystemProperties;
@@ -131,7 +130,7 @@ public class CleanerSchedule extends AbstractSchedule implements Lifecycle {
      */
     public void processRetryLogPartitionTasks(List<? extends PartitionTask> partitionTasks) {
 
-        List<BigInteger> retryIds = StreamUtils.toList(partitionTasks, PartitionTask::getId);
+        List<BigInteger> retryIds = CollectionUtils.transformToList(partitionTasks, PartitionTask::getId);
         if (CollectionUtils.isEmpty(retryIds)) {
             return;
         }
@@ -143,7 +142,7 @@ public class CleanerSchedule extends AbstractSchedule implements Lifecycle {
         List<BigInteger> totalWaitRetryIds = Lists.newArrayList(retryIds);
         List<BigInteger> cbRetryIds = Lists.newArrayList();
         if (!CollectionUtils.isEmpty(cbRetries)) {
-            cbRetryIds = StreamUtils.toList(cbRetries, Retry::getId);
+            cbRetryIds = CollectionUtils.transformToList(cbRetries, Retry::getId);
             totalWaitRetryIds.addAll(cbRetryIds);
         }
 
@@ -180,12 +179,12 @@ public class CleanerSchedule extends AbstractSchedule implements Lifecycle {
 
                 // 删除重试任务
                 if (!CollectionUtils.isEmpty(retryTaskList)) {
-                    List<BigInteger> retryTaskIds = StreamUtils.toList(retryTaskList, RetryTask::getId);
+                    List<BigInteger> retryTaskIds = CollectionUtils.transformToList(retryTaskList, RetryTask::getId);
                     Lists.partition(retryTaskIds, 500).forEach(retryTaskDao::deleteBatchIds);
                 }
 
                 if (!CollectionUtils.isEmpty(retryTaskLogMessageList)) {
-                    List<BigInteger> retryTaskLogMessageIds = StreamUtils.toList(retryTaskLogMessageList, RetryTaskLogMessage::getId);
+                    List<BigInteger> retryTaskLogMessageIds = CollectionUtils.transformToList(retryTaskLogMessageList, RetryTaskLogMessage::getId);
                     Lists.partition(retryTaskLogMessageIds, 500).forEach(retryTaskLogMessageDao::deleteBatchIds);
                 }
 
@@ -220,7 +219,7 @@ public class CleanerSchedule extends AbstractSchedule implements Lifecycle {
                 () -> new SilenceJobServerException("插入死信队列失败 [{}]", JSON.toJSONString(retryDeadLetters)));
 
         Assert.isTrue(retries.size() == retryDao.delete(new LambdaQueryWrapper<Retry>()
-                        .in(Retry::getId, StreamUtils.toList(retries, RetryPartitionTask::getId))),
+                        .in(Retry::getId, CollectionUtils.transformToList(retries, RetryPartitionTask::getId))),
                 () -> new SilenceJobServerException("删除重试数据失败 [{}]", JSON.toJSONString(retries)));
 
         SilenceSpringContext.getContext().publishEvent(new RetryTaskFailDeadLetterAlarmEvent(

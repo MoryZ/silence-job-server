@@ -5,8 +5,11 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.springframework.core.convert.converter.Converter;
 import com.old.silence.core.mapstruct.MapStructSpringConfig;
+import com.old.silence.core.util.CollectionUtils;
 import com.old.silence.job.server.domain.model.Job;
 import com.old.silence.job.server.domain.model.JobNotifyConfigRelation;
+import com.old.silence.job.server.vo.JobAndJobNotifyConfigRelationView;
+import com.old.silence.job.server.vo.JobNotifyConfigRelationView;
 import com.old.silence.job.server.vo.JobResponseVO;
 
 import java.math.BigInteger;
@@ -26,15 +29,16 @@ public interface JobResponseVOMapper extends Converter<Job, JobResponseVO> {
     @Mapping(target = "notifyIds", expression = "java(toNotifyIds(job.getNotifyRelations()))")
     JobResponseVO convert(Job job);
 
+    @Mapping(target = "nextTriggerAt", expression = "java(toLocalDateTime(job.getNextTriggerAt()))")
+    @Mapping(target = "notifyIds", expression = "java(toNotifyIdsView(job.getNotifyRelations()))")
+    JobResponseVO convert(JobAndJobNotifyConfigRelationView job);
 
     default Set<BigInteger> toNotifyIds(List<JobNotifyConfigRelation> notifyRelations) {
-        if (notifyRelations == null || notifyRelations.isEmpty()) {
-            return Set.of();
-        }
+        return CollectionUtils.transformToSet(notifyRelations, JobNotifyConfigRelation::getNotifyConfigId);
+    }
 
-        return notifyRelations.stream()
-                .map(JobNotifyConfigRelation::getNotifyConfigId)
-                .collect(Collectors.toSet());
+    default Set<BigInteger> toNotifyIdsView(List<JobNotifyConfigRelationView> notifyRelations) {
+        return CollectionUtils.transformToSet(notifyRelations, JobNotifyConfigRelationView::getNotifyConfigId);
     }
 
     default Instant toLocalDateTime(Long nextTriggerAt) {
